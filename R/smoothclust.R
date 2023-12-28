@@ -24,7 +24,7 @@
 #' @importFrom SingleCellExperiment logcounts
 #' @importFrom SummarizedExperiment assays 'assays<-'
 #' @importFrom spdep dnearneigh
-#' @importFrom methods is
+#' @importFrom methods is as
 #' 
 #' @export
 #' 
