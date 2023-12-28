@@ -1,0 +1,2 @@
+# smoothclust
+Spatial clustering algorithm
