@@ -1,0 +1,17 @@
+Package: smoothclust
+Version: 0.0.1
+Title: smoothclust
+Description: Spatial clustering algorithm.
+Authors@R: c(
+    person("Lukas M.", "Weber", 
+           email = "lmweberedu@gmail.com", 
+           role = c("aut", "cre"), 
+           comment = c(ORCID = "0000-0002-3282-1730")))
+URL: https://github.com/lmweber/smoothclust
+BugReports: https://github.com/lmweber/smoothclust/issues
+License: MIT + file LICENSE
+Encoding: UTF-8
+Imports: 
+    SpatialExperiment, 
+    spdep
+VignetteBuilder: knitr
