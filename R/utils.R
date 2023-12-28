@@ -1,6 +1,17 @@
 # Utility functions
 # sourced from 'rowr' package formerly available from CRAN
 
+.as2<-function(object,class)
+{
+  object<-as.matrix(object)
+  if(class=='factor')
+    return(as.factor(as.character(object)))
+  if(class=='data.frame')
+    return(as.data.frame(object))
+  else
+    return(as(object,class))
+}
+
 .len <- function(data)
 {
   result<-ifelse(is.null(nrow(data)),length(data),nrow(data))
@@ -19,7 +30,7 @@
     results<-t(results)
   }
   if(preserveClass)
-    results<-as2(results,xclass)
+    results<-.as2(results,xclass)
   return(results)   
 }
 
