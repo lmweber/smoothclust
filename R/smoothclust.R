@@ -78,6 +78,8 @@ smoothclust <- function(input, bandwidth = 0.05) {
   rownames(neigh_mx) <- NULL
   colnames(neigh_mx) <- NULL
   
+  # to do: alternative using kernel smoothing
+  
   # calculate average logcounts across neighbors
   # note: missing values (non-detected genes) are interpreted as zeros when averaging
   # note: formatting as dense 3-D array / tensor
