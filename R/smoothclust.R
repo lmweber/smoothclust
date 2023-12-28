@@ -71,7 +71,7 @@ smoothclust <- function(input, bandwidth = 0.05) {
   neigh <- mapply(c, self, neigh, SIMPLIFY=FALSE)
   # format as matrix (with NAs to fill)
   # using utility functions
-  neigh_mx <- do.call(cbind.fill, c(neigh, fill = NA))
+  neigh_mx <- do.call(.cbind.fill, c(neigh, fill = NA))
   rownames(neigh_mx) <- NULL
   colnames(neigh_mx) <- NULL
   

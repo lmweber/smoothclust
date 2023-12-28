@@ -1,18 +1,18 @@
 # Utility functions
 # sourced from 'rowr' package formerly available from CRAN
 
-len <- function(data)
+.len <- function(data)
 {
   result<-ifelse(is.null(nrow(data)),length(data),nrow(data))
   return(result)
 }
 
-buffer<-function(x,length.out=len(x),fill=NULL,preserveClass=TRUE)
+.buffer<-function(x,length.out=.len(x),fill=NULL,preserveClass=TRUE)
 {
   xclass<-class(x)
-  input<-lapply(vert(x),unlist)
+  input<-lapply(.vert(x),unlist)
   results<-as.data.frame(lapply(input,rep,length.out=length.out))
-  if(length.out>len(x) && !is.null(fill))
+  if(length.out>.len(x) && !is.null(fill))
   {
     results<-t(results)
     results[(length(unlist(x))+1):length(unlist(results))]<-fill
@@ -23,7 +23,7 @@ buffer<-function(x,length.out=len(x),fill=NULL,preserveClass=TRUE)
   return(results)   
 }
 
-vert<-function(object)
+.vert<-function(object)
 {
   #result<-as.data.frame(cbind(as.matrix(object)))
   if(is.list(object))
@@ -33,11 +33,11 @@ vert<-function(object)
   return(object)
 }
 
-cbind.fill<-function(...,fill=NULL)
+.cbind.fill<-function(...,fill=NULL)
 {
   inputs<-list(...)
-  inputs<-lapply(inputs,vert)
-  maxlength<-max(unlist(lapply(inputs,len)))
-  bufferedInputs<-lapply(inputs,buffer,length.out=maxlength,fill,preserveClass=FALSE)
+  inputs<-lapply(inputs,.vert)
+  maxlength<-max(unlist(lapply(inputs,.len)))
+  bufferedInputs<-lapply(inputs,.buffer,length.out=maxlength,fill,preserveClass=FALSE)
   return(Reduce(cbind.data.frame,bufferedInputs))
 }
