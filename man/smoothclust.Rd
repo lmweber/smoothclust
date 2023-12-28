@@ -4,7 +4,7 @@
 \alias{smoothclust}
 \title{smoothclust}
 \usage{
-smoothclust(input, bandwidth = 0.05)
+smoothclust(input, bandwidth = 0.1)
 }
 \arguments{
 \item{input}{Input data, assumed to be provided as \code{SpatialExperiment}
@@ -13,8 +13,8 @@ slot and log-transformed normalized counts in assay named \code{logcounts}.}
 
 \item{bandwidth}{Parameter defining the bandwidth for smoothing, expressed as
 the proportion of the width or height (whichever is greater) of the tissue
-area. For example, a bandwidth of 0.05 will smooth logcounts across values
-measured within a circle of radius equal to 5% of the width or height
+area. For example, a bandwidth of 0.1 will smooth logcounts across values
+measured within a circle of radius equal to 10% of the width or height
 (whichever is greater) of the tissue area.}
 }
 \value{

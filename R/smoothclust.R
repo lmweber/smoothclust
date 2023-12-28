@@ -11,8 +11,8 @@
 #' 
 #' @param bandwidth Parameter defining the bandwidth for smoothing, expressed as
 #'   the proportion of the width or height (whichever is greater) of the tissue
-#'   area. For example, a bandwidth of 0.05 will smooth logcounts across values
-#'   measured within a circle of radius equal to 5% of the width or height
+#'   area. For example, a bandwidth of 0.1 will smooth logcounts across values
+#'   measured within a circle of radius equal to 10% of the width or height
 #'   (whichever is greater) of the tissue area.
 #' 
 #' 
@@ -52,7 +52,7 @@
 #' # run smoothclust
 #' spe <- smoothclust(spe)
 #' 
-smoothclust <- function(input, bandwidth = 0.05) {
+smoothclust <- function(input, bandwidth = 0.1) {
   
   spe <- input
   
