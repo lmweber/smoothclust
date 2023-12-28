@@ -56,7 +56,7 @@ smoothclust <- function(input, bandwidth = 0.05) {
   
   spe <- input
   
-  stopifnot(is(class(spe), "SpatialExperiment"))
+  stopifnot(is(spe, "SpatialExperiment"))
   
   spatialcoords <- spatialCoords(spe)
   
