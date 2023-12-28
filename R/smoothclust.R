@@ -29,7 +29,6 @@
 #' library(SpatialExperiment)
 #' library(STexampleData)
 #' library(scran)
-#' library(spdep)
 #' 
 #' # download data object
 #' spe <- Visium_humanDLPFC()
@@ -46,6 +45,9 @@
 #' top_hvgs <- getTopHVGs(dec, prop = 0.1)
 #' spe <- spe[top_hvgs, ]
 #' dim(spe)
+#' 
+#' # run smoothclust
+#' spe <- smoothclust(spe)
 #' 
 smoothclust <- function(input, bandwidth = 0.05) {
   
