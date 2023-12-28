@@ -21,7 +21,10 @@
 #' 
 #' 
 #' @importFrom SpatialExperiment spatialCoords
+#' @importFrom SingleCellExperiment logcounts
+#' @importFrom SummarizedExperiment assays 'assays<-'
 #' @importFrom spdep dnearneigh
+#' @importFrom methods is
 #' 
 #' @export
 #' 
