@@ -69,6 +69,7 @@ smoothclust <- function(input, bandwidth = 0.1) {
   # calculate neighbors
   neigh <- dnearneigh(spatialcoords, d1 = 0, d2 = bandwidth_dist)
   # # calculate distances for weighting
+  # # use to calculate truncated kernel weights
   # dists <- nbdists(neigh, coords = spatialcoords)
   # include self within set of neighbors for each point
   stopifnot(length(neigh) == ncol(spe))
@@ -79,8 +80,6 @@ smoothclust <- function(input, bandwidth = 0.1) {
   neigh_mx <- do.call(.cbind.fill, c(neigh, fill = NA))
   rownames(neigh_mx) <- NULL
   colnames(neigh_mx) <- NULL
-  
-  # to do: weight by distance (or alternatively use kernel smoothing)
   
   # calculate average logcounts across neighbors
   # note: missing values (non-detected genes) are interpreted as zeros when averaging
