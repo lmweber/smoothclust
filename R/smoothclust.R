@@ -9,18 +9,33 @@
 #'   object containing matrix of spatial coordinates in \code{spatialCoords}
 #'   slot and log-transformed normalized counts in assay named \code{logcounts}.
 #' 
+#' @param method Method used for smoothing. The \code{uniform} method calculates
+#'   average logcounts (unweighted) across all measurement locations within a
+#'   circle with radius \code{bandwidth} at each measurement location, which
+#'   smooths out spatial variability as well as sparsity due to sampling
+#'   variability. The \code{kernel} method calculates a weighted average using a
+#'   truncated exponential kernel applied to Euclidean distances with a length
+#'   scale parameter equal to \code{bandwidth}, which provides a more
+#'   sophisticated approach to smoothing out spatial variability but may be
+#'   affected by sparsity due to sampling variability, especially at the index
+#'   point.
+#' 
 #' @param bandwidth Parameter defining the bandwidth for smoothing, expressed as
 #'   the proportion of the width or height (whichever is greater) of the tissue
-#'   area. Smoothing is performed across neighboring values of logcounts,
-#'   weighted by distances scaled using a truncated exponential kernel applied
-#'   to Euclidean distances. For example, a bandwidth of 0.05 will smooth
-#'   logcounts across neighbors weighted by distances scaled using a truncated
-#'   exponential kernel with length scale equal to 5% of the width or height
-#'   (whichever is greater) of the tissue area. Weights are truncated at 0.01
-#'   for computational efficiency.
+#'   area. Smoothing is performed across neighboring values of logcounts at each
+#'   point. For \code{method = "uniform"}, the bandwidth represents the radius
+#'   of a circle, and unweighted average logcounts are calculated across points
+#'   within this circle. For \code{method = "kernel"}, the averaging is weighted
+#'   by distances scaled using a truncated exponential kernel applied to
+#'   Euclidean distances. For example, a bandwidth of 0.05 will smooth logcounts
+#'   across neighbors weighted by distances scaled using a truncated exponential
+#'   kernel with length scale equal to 5% of the width or height (whichever is
+#'   greater) of the tissue area. Weights for \code{method = "kernel"} are
+#'   truncated for computational efficiency.
 #' 
-#' @param truncate Truncation threshold parameter. Kernel weights below this
-#'   value are set to zero for computational efficiency.
+#' @param truncate Truncation threshold parameter if \code{method = "kernel"}.
+#'   Kernel weights below this value are set to zero for computational
+#'   efficiency. Ignored if \code{method == "uniform"}.
 #' 
 #' 
 #' @return Returns the \code{SpatialExperiment} object with a new assay named
@@ -60,7 +75,10 @@
 #' # run smoothclust
 #' spe <- smoothclust(spe)
 #' 
-smoothclust <- function(input, bandwidth = 0.05, truncate = 0.05) {
+smoothclust <- function(input, method = c("uniform", "kernel"), 
+                        bandwidth = 0.05, truncate = 0.05) {
+  
+  method <- match.arg(method, c("uniform", "kernel"))
   
   spe <- input
   
@@ -72,50 +90,77 @@ smoothclust <- function(input, bandwidth = 0.05, truncate = 0.05) {
   range_x <- abs(diff(range(spatialcoords[, 1])))
   range_y <- abs(diff(range(spatialcoords[, 2])))
   range_max <- max(range_x, range_y)
-  l <- bandwidth * range_max  ## l = scaled bandwidth or length scale
+  bandwidth_scaled <- bandwidth * range_max
   
-  # calculate neighbors (note self is excluded)
-  neigh <- dnearneigh(spatialcoords, d1 = 0, d2 = Inf)
-  # calculate distances
-  dists <- nbdists(neigh, coords = spatialcoords)
+  if (method == "uniform") {
+    # calculate neighbors (note self is excluded)
+    neigh <- dnearneigh(spatialcoords, d1 = 0, d2 = bandwidth_scaled)
+  }
+  
+  if (method == "kernel") {
+    # calculate neighbors (note self is excluded)
+    neigh <- dnearneigh(spatialcoords, d1 = 0, d2 = Inf)
+    # calculate distances
+    dists <- nbdists(neigh, coords = spatialcoords)
+  }
   
   # put back self within set of neighbors for each point
   stopifnot(length(neigh) == ncol(spe))
-  stopifnot(length(dists) == ncol(spe))
-  # index of self point
+  # include index of self point
   neigh <- mapply(c, as.list(seq_len(ncol(spe))), neigh, SIMPLIFY = FALSE)
-  # distance (zero) to self point
-  dists <- mapply(c, 0, dists, SIMPLIFY = FALSE)
   
-  # calculate exponential kernel weights
-  exp_kernel <- function(d) {exp(-d / l)}  ## d = Euclidean distance
-  weights <- lapply(dists, exp_kernel)
+  if (method == "kernel") {
+    stopifnot(length(dists) == ncol(spe))
+    # include distance (zero) to self point
+    dists <- mapply(c, 0, dists, SIMPLIFY = FALSE)
+  }
   
-  # truncate kernel weights below threshold
-  keep <- lapply(weights, function(w) {w >= truncate})
+  # calculate weights for kernel method
+  if (method == "kernel") {
+    # calculate exponential kernel weights
+    exp_kernel <- function(d) {exp(-d / bandwidth_scaled)}  ## d = Euclidean distance
+    weights <- lapply(dists, exp_kernel)
+    
+    # truncate kernel weights below threshold
+    keep <- lapply(weights, function(w) {w >= truncate})
+    
+    stopifnot(length(weights) == length(keep))
+    stopifnot(length(neigh) == length(keep))
+    
+    weights <- mapply(function(w, k) {w[k]}, weights, keep)
+    neigh <- mapply(function(n, k) {n[k]}, neigh, keep)
+  }
   
-  stopifnot(length(weights) == length(keep))
-  stopifnot(length(neigh) == length(keep))
-  
-  weights <- mapply(function(w, k) {w[k]}, weights, keep)
-  neigh <- mapply(function(n, k) {n[k]}, neigh, keep)
-  
-  # calculate smoothed logcounts by weighted averaging
+  # calculate smoothed logcounts
   # note: using dense matrix to ensure zeros are included in averaging
   lc <- as.matrix(logcounts(spe))
   lc_smooth <- matrix(as.numeric(NA), nrow = nrow(spe), ncol = ncol(spe))
-  # progress bar
+  
   pb <- txtProgressBar(0, ncol(lc_smooth), style = 3)
-  for (i in seq_len(ncol(lc_smooth))) {
-    setTxtProgressBar(pb, i)
-    # extract values and weights
-    lc_sub <- lc[, neigh[[i]]]
-    weights_rep <- t(replicate(nrow(lc_sub), weights[[i]]))
-    stopifnot(all(dim(lc_sub) == dim(weights_rep)))
-    # calculate weighted average
-    vals <- rowSums(lc_sub * weights_rep) / sum(weights[[i]])
-    lc_smooth[, i] <- vals
+  
+  if (method == "uniform") {
+    for (i in seq_len(ncol(lc_smooth))) {
+      setTxtProgressBar(pb, i)
+      # extract values
+      lc_sub <- lc[, neigh[[i]]]
+      # calculate average
+      lc_smooth[, i] <- rowMeans(lc_sub)
+    }
   }
+  
+  if (method == "kernel") {
+    for (i in seq_len(ncol(lc_smooth))) {
+      setTxtProgressBar(pb, i)
+      # extract values and weights
+      lc_sub <- lc[, neigh[[i]]]
+      weights_rep <- t(replicate(nrow(lc_sub), weights[[i]]))
+      stopifnot(all(dim(lc_sub) == dim(weights_rep)))
+      # calculate weighted average
+      vals <- rowSums(lc_sub * weights_rep) / sum(weights[[i]])
+      lc_smooth[, i] <- vals
+    }
+  }
+  
   close(pb)
   
   stopifnot(nrow(lc_smooth) == nrow(spe))
