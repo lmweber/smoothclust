@@ -21,7 +21,8 @@ Imports:
     SingleCellExperiment, 
     SummarizedExperiment, 
     spdep, 
-    methods
+    methods, 
+    utils
 VignetteBuilder: knitr
 Suggests: 
     STexampleData, 

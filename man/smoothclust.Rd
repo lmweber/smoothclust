@@ -4,7 +4,7 @@
 \alias{smoothclust}
 \title{smoothclust}
 \usage{
-smoothclust(input, bandwidth = 0.1)
+smoothclust(input, bandwidth = 0.05, truncate = 0.05)
 }
 \arguments{
 \item{input}{Input data, assumed to be provided as \code{SpatialExperiment}
@@ -13,9 +13,16 @@ slot and log-transformed normalized counts in assay named \code{logcounts}.}
 
 \item{bandwidth}{Parameter defining the bandwidth for smoothing, expressed as
 the proportion of the width or height (whichever is greater) of the tissue
-area. For example, a bandwidth of 0.1 will smooth logcounts across values
-measured within a circle of radius equal to 10% of the width or height
-(whichever is greater) of the tissue area.}
+area. Smoothing is performed across neighboring values of logcounts,
+weighted by distances scaled using a truncated exponential kernel applied
+to Euclidean distances. For example, a bandwidth of 0.05 will smooth
+logcounts across neighbors weighted by distances scaled using a truncated
+exponential kernel with length scale equal to 5% of the width or height
+(whichever is greater) of the tissue area. Weights are truncated at 0.01
+for computational efficiency.}
+
+\item{truncate}{Truncation threshold parameter. Kernel weights below this
+value are set to zero for computational efficiency.}
 }
 \value{
 Returns the \code{SpatialExperiment} object with a new assay named

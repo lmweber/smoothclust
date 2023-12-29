@@ -11,9 +11,16 @@
 #' 
 #' @param bandwidth Parameter defining the bandwidth for smoothing, expressed as
 #'   the proportion of the width or height (whichever is greater) of the tissue
-#'   area. For example, a bandwidth of 0.1 will smooth logcounts across values
-#'   measured within a circle of radius equal to 10% of the width or height
-#'   (whichever is greater) of the tissue area.
+#'   area. Smoothing is performed across neighboring values of logcounts,
+#'   weighted by distances scaled using a truncated exponential kernel applied
+#'   to Euclidean distances. For example, a bandwidth of 0.05 will smooth
+#'   logcounts across neighbors weighted by distances scaled using a truncated
+#'   exponential kernel with length scale equal to 5% of the width or height
+#'   (whichever is greater) of the tissue area. Weights are truncated at 0.01
+#'   for computational efficiency.
+#' 
+#' @param truncate Truncation threshold parameter. Kernel weights below this
+#'   value are set to zero for computational efficiency.
 #' 
 #' 
 #' @return Returns the \code{SpatialExperiment} object with a new assay named
@@ -23,8 +30,9 @@
 #' @importFrom SpatialExperiment spatialCoords
 #' @importFrom SingleCellExperiment logcounts
 #' @importFrom SummarizedExperiment assays 'assays<-'
-#' @importFrom spdep dnearneigh
+#' @importFrom spdep dnearneigh nbdists
 #' @importFrom methods is as
+#' @importFrom utils txtProgressBar setTxtProgressBar
 #' 
 #' @export
 #' 
@@ -52,7 +60,7 @@
 #' # run smoothclust
 #' spe <- smoothclust(spe)
 #' 
-smoothclust <- function(input, bandwidth = 0.1) {
+smoothclust <- function(input, bandwidth = 0.05, truncate = 0.05) {
   
   spe <- input
   
@@ -64,43 +72,59 @@ smoothclust <- function(input, bandwidth = 0.1) {
   range_x <- abs(diff(range(spatialcoords[, 1])))
   range_y <- abs(diff(range(spatialcoords[, 2])))
   range_max <- max(range_x, range_y)
-  bandwidth_scaled <- bandwidth * range_max
+  l <- bandwidth * range_max  ## l = scaled bandwidth or length scale
   
-  # calculate neighbors
-  neigh <- dnearneigh(spatialcoords, d1 = 0, d2 = bandwidth_scaled)
-  # # calculate distances for weighting
-  # # use to calculate truncated kernel weights and store in array
-  # dists <- nbdists(neigh, coords = spatialcoords)
+  # calculate neighbors (note self is excluded)
+  neigh <- dnearneigh(spatialcoords, d1 = 0, d2 = Inf)
+  # calculate distances
+  dists <- nbdists(neigh, coords = spatialcoords)
   
-  # include self within set of neighbors for each point
+  # put back self within set of neighbors for each point
   stopifnot(length(neigh) == ncol(spe))
-  self <- as.list(seq_along(neigh))
-  neigh <- mapply(c, self, neigh, SIMPLIFY=FALSE)
-  # format as matrix (with NAs to fill)
-  # using utility functions
-  neigh_mx <- do.call(.cbind.fill, c(neigh, fill = NA))
-  rownames(neigh_mx) <- NULL
-  colnames(neigh_mx) <- NULL
+  stopifnot(length(dists) == ncol(spe))
+  # index of self point
+  neigh <- mapply(c, as.list(seq_len(ncol(spe))), neigh, SIMPLIFY = FALSE)
+  # distance (zero) to self point
+  dists <- mapply(c, 0, dists, SIMPLIFY = FALSE)
   
-  # calculate average logcounts across neighbors
-  # note: missing values (non-detected genes) are interpreted as zeros when averaging
-  # note: formatting as dense 3-D array / tensor
-  logcounts_neigh <- array(NA, dim = c(nrow(spe), ncol(spe), nrow(neigh_mx)))
+  # calculate exponential kernel weights
+  exp_kernel <- function(d) {exp(-d / l)}  ## d = Euclidean distance
+  weights <- lapply(dists, exp_kernel)
+  
+  # truncate kernel weights below threshold
+  keep <- lapply(weights, function(w) {w >= truncate})
+  
+  stopifnot(length(weights) == length(keep))
+  stopifnot(length(neigh) == length(keep))
+  
+  weights <- mapply(function(w, k) {w[k]}, weights, keep)
+  neigh <- mapply(function(n, k) {n[k]}, neigh, keep)
+  
+  # calculate smoothed logcounts by weighted averaging
+  # note: using dense matrix to ensure zeros are included in averaging
   lc <- as.matrix(logcounts(spe))
-  for (i in seq_len(ncol(spe))) {
-    logcounts_neigh[, i, ] <- lc[, neigh_mx[, i]]
+  lc_smooth <- matrix(as.numeric(NA), nrow = nrow(spe), ncol = ncol(spe))
+  # progress bar
+  pb <- txtProgressBar(0, ncol(lc_smooth), style = 3)
+  for (i in seq_len(ncol(lc_smooth))) {
+    setTxtProgressBar(pb, i)
+    # extract values and weights
+    lc_sub <- lc[, neigh[[i]]]
+    weights_rep <- t(replicate(nrow(lc_sub), weights[[i]]))
+    stopifnot(all(dim(lc_sub) == dim(weights_rep)))
+    # calculate weighted average
+    vals <- rowSums(lc_sub * weights_rep) / sum(weights[[i]])
+    lc_smooth[, i] <- vals
   }
+  close(pb)
   
-  # slightly slow step (runtime: seconds)
-  logcounts_smooth <- apply(logcounts_neigh, c(1, 2), mean, na.rm = TRUE)
-  
-  stopifnot(nrow(logcounts_smooth) == nrow(spe))
-  stopifnot(ncol(logcounts_smooth) == ncol(spe))
-  rownames(logcounts_smooth) <- rownames(spe)
-  colnames(logcounts_smooth) <- colnames(spe)
+  stopifnot(nrow(lc_smooth) == nrow(spe))
+  stopifnot(ncol(lc_smooth) == ncol(spe))
+  rownames(lc_smooth) <- rownames(spe)
+  colnames(lc_smooth) <- colnames(spe)
   
   # store in object
-  assays(spe)[["logcounts_smooth"]] <- logcounts_smooth
+  assays(spe)[["logcounts_smooth"]] <- lc_smooth
   
   spe
 }
