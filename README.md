@@ -1,2 +1,4 @@
 # smoothclust
-Spatial clustering algorithm
+
+Spatial clustering algorithm. Currently under development.
+
