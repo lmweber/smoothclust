@@ -60,16 +60,16 @@ smoothclust <- function(input, bandwidth = 0.1) {
   
   spatialcoords <- spatialCoords(spe)
   
-  # convert bandwidth argument to distance units
+  # convert bandwidth to same units as distances
   range_x <- abs(diff(range(spatialcoords[, 1])))
   range_y <- abs(diff(range(spatialcoords[, 2])))
   range_max <- max(range_x, range_y)
-  bandwidth_dist <- bandwidth * range_max
+  bandwidth_scaled <- bandwidth * range_max
   
   # calculate neighbors
-  neigh <- dnearneigh(spatialcoords, d1 = 0, d2 = bandwidth_dist)
+  neigh <- dnearneigh(spatialcoords, d1 = 0, d2 = bandwidth_scaled)
   # # calculate distances for weighting
-  # # use to calculate truncated kernel weights
+  # # use to calculate truncated kernel weights and store in array
   # dists <- nbdists(neigh, coords = spatialcoords)
   
   # include self within set of neighbors for each point
