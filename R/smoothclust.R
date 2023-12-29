@@ -71,6 +71,7 @@ smoothclust <- function(input, bandwidth = 0.1) {
   # # calculate distances for weighting
   # # use to calculate truncated kernel weights
   # dists <- nbdists(neigh, coords = spatialcoords)
+  
   # include self within set of neighbors for each point
   stopifnot(length(neigh) == ncol(spe))
   self <- as.list(seq_along(neigh))
