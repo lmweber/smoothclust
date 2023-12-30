@@ -1,7 +1,11 @@
 Package: smoothclust
 Version: 0.0.1
 Title: smoothclust
-Description: Spatial clustering algorithm.
+Description: Spatial clustering algorithm for spatial transcriptomics data 
+    based on the principle of smoothing expression measurements across 
+    neighboring spatial locations. The algorithm can be used to define spatial 
+    domains consisting of a single cell type or a consistent mixture of cell 
+    types, with clearly defined spatial boundaries.
 Authors@R: c(
     person("Lukas M.", "Weber", 
            email = "lmweberedu@gmail.com", 
