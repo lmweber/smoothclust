@@ -31,5 +31,6 @@ VignetteBuilder: knitr
 Suggests: 
     STexampleData, 
     scran, 
+    BiocStyle, 
     knitr
 RoxygenNote: 7.2.3
