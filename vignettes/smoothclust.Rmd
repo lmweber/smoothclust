@@ -1,0 +1,41 @@
+---
+title: "smoothclust"
+author: 
+  - name: Lukas M. Weber
+    affiliation: "Boston University School of Public Health"
+package: smoothclust
+output: 
+  BiocStyle::html_document: 
+    toc_float: true
+vignette: >
+  %\VignetteIndexEntry{smoothclust}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+
+# Introduction
+
+`smoothclust` is a spatial clustering algorithm for spatial transcriptomics data. Currently under development.
+
+
+# Installation
+
+To add
+
+
+# Input data format
+
+To add
+
+
+# Tutorial
+
+To add
+
+
+# Session information
+
+```{r}
+sessionInfo()
+```
