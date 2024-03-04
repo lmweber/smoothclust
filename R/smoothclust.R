@@ -5,55 +5,73 @@
 #' Spatial clustering algorithm for spatial transcriptomics data based on the
 #' principle of smoothing expression measurements across neighboring spatial
 #' locations. The algorithm can be used to define spatial domains consisting of
-#' a single cell type or a consistent mixture of cell types, with clearly
-#' defined spatial boundaries.
+#' a single cell type or a consistent mixture of cell types with smooth spatial
+#' boundaries.
 #' 
 #' 
 #' @param input Input data, assumed to be provided as \code{SpatialExperiment}
-#'   object containing matrix of spatial coordinates in \code{spatialCoords}
-#'   slot and log-transformed normalized counts in assay named \code{logcounts}.
+#'   object containing spatial coordinates in \code{spatialCoords} slot and
+#'   expression counts (raw or transformed) in \code{assays} slot.
+#' 
+#' @param assay_name Name of \code{assay} in input object containing expression
+#'   count values to be smoothed. Usually this will be either \code{counts} (raw
+#'   counts) or \code{logcounts} (log-transformed normalized counts). We
+#'   recommend using raw counts (\code{counts}) if available, in which case the
+#'   methodology will apply smoothing to the raw counts and then calculate
+#'   logcounts. Alternatively, logcounts (\code{logcounts}) may also be used as
+#'   the input, in which case the smoothed values represent geometric averages,
+#'   which are more difficult to interpret. Default = \code{counts}.
 #' 
 #' @param method Method used for smoothing. The \code{uniform} method calculates
-#'   average logcounts (unweighted) across all measurement locations within a
-#'   circular window with radius \code{bandwidth} at each measurement location,
-#'   which smooths out spatial variability as well as sparsity due to sampling
-#'   variability. The \code{kernel} method calculates a weighted average using a
-#'   truncated exponential kernel applied to Euclidean distances with a length
-#'   scale parameter equal to \code{bandwidth}, which provides a more
-#'   sophisticated approach to smoothing out spatial variability but may be
-#'   affected by sparsity due to sampling variability, especially sparsity at
-#'   the index point.
+#'   unweighted averages across spatial locations within a circular window with
+#'   radius \code{bandwidth} at each spatial location, which smooths out spatial
+#'   variability as well as sparsity due to sampling variability. The
+#'   \code{kernel} method calculates a weighted average using a truncated
+#'   exponential kernel applied to Euclidean distances with a length scale
+#'   parameter equal to \code{bandwidth}, which provides a more sophisticated
+#'   approach to smoothing out spatial variability but may be affected by
+#'   sparsity due to sampling variability (especially sparsity at the index
+#'   point), and is computationally slower. Default = \code{uniform}.
 #' 
 #' @param bandwidth Bandwidth parameter for smoothing, expressed as proportion
 #'   of width or height (whichever is greater) of tissue area. Smoothing is
-#'   performed across neighboring values of logcounts at each point. For
-#'   \code{method = "uniform"}, the bandwidth represents the radius of a circle,
-#'   and unweighted average logcounts are calculated across points within this
-#'   circle. For \code{method = "kernel"}, the averaging is weighted by
-#'   distances scaled using a truncated exponential kernel applied to Euclidean
-#'   distances. For example, a bandwidth of 0.05 will smooth logcounts across
-#'   neighbors weighted by distances scaled using a truncated exponential kernel
-#'   with length scale equal to 5% of the width or height (whichever is greater)
-#'   of the tissue area. Weights for \code{method = "kernel"} are truncated at
-#'   small values for computational efficiency.
+#'   performed across neighboring values at each point. For \code{method =
+#'   "uniform"}, the bandwidth represents the radius of a circle, and unweighted
+#'   averages are calculated across points within this circle. For \code{method
+#'   = "kernel"}, the averaging is weighted by distances scaled using a
+#'   truncated exponential kernel applied to Euclidean distances. For example, a
+#'   bandwidth of 0.05 will smooth values across neighbors weighted by distances
+#'   scaled using a truncated exponential kernel with length scale equal to 5%
+#'   of the width or height (whichever is greater) of the tissue area. Weights
+#'   for \code{method = "kernel"} are truncated at small values for
+#'   computational efficiency. Default = 0.05.
 #' 
 #' @param truncate Truncation threshold parameter if \code{method = "kernel"}.
 #'   Kernel weights below this value are set to zero for computational
-#'   efficiency. Ignored if \code{method == "uniform"}.
+#'   efficiency. Only used for \code{method = "kernel"}. Default = 0.05.
+#' 
+#' @param assay_name_smooth Name of assay to store smoothed values. Default =
+#'   \code{counts_smooth}. Alternatively, set to \code{logcounts_smooth} if
+#'   logcounts were provided instead of raw counts for the input values.
+#' 
+#' @param calc_logcounts Whether to calculate logcounts using smoothed values of
+#'   raw counts and store these in new assay named \code{logcounts_smooth} in
+#'   output object. Uses methods from \code{scran} package to calculate
+#'   normalization and log-transformation. Default = TRUE.
 #' 
 #' 
-#' @return Returns the \code{SpatialExperiment} object with a new assay named
-#'   \code{logcounts_smooth} containing spatially smoothed logcounts values,
-#'   which can be used as the input for further downstream analyses such as
-#'   clustering.
+#' @return Returns the \code{SpatialExperiment} object with new assays (default
+#'   names \code{counts_smooth} and \code{logcounts_smooth}) containing
+#'   spatially smoothed expression values, which can be used as the input for
+#'   further downstream analyses such as clustering.
 #' 
 #' 
 #' @importFrom SpatialExperiment spatialCoords
-#' @importFrom SingleCellExperiment logcounts
-#' @importFrom SummarizedExperiment assays 'assays<-'
+#' @importFrom SummarizedExperiment assays 'assays<-' assayNames
 #' @importFrom spdep dnearneigh nbdists
 #' @importFrom methods is as
 #' @importFrom utils txtProgressBar setTxtProgressBar
+#' @importFrom scuttle logNormCounts
 #' 
 #' @export
 #' 
@@ -85,13 +103,19 @@
 #' assayNames(spe)
 #' 
 smoothclust <- function(input, method = c("uniform", "kernel"), 
-                        bandwidth = 0.05, truncate = 0.05) {
+                        assay_name = "counts", 
+                        bandwidth = 0.05, truncate = 0.05, 
+                        assay_name_smooth = "counts_smooth", 
+                        calc_logcounts = TRUE) {
   
   method <- match.arg(method, c("uniform", "kernel"))
   
   spe <- input
   
   stopifnot(is(spe, "SpatialExperiment"))
+  stopifnot(assay_name %in% assayNames(spe))
+  
+  vals <- assays(spe)[[assay_name]]
   
   spatialcoords <- spatialCoords(spe)
   
@@ -139,45 +163,51 @@ smoothclust <- function(input, method = c("uniform", "kernel"),
     neigh <- mapply(function(n, k) {n[k]}, neigh, keep)
   }
   
-  # calculate smoothed logcounts
+  # calculate smoothed values
   # note: using dense matrix to ensure zeros are included in averaging
-  lc <- as.matrix(logcounts(spe))
-  lc_smooth <- matrix(as.numeric(NA), nrow = nrow(spe), ncol = ncol(spe))
+  vals <- as.matrix(vals)
+  vals_smooth <- matrix(as.numeric(NA), nrow = nrow(spe), ncol = ncol(spe))
   
-  pb <- txtProgressBar(0, ncol(lc_smooth), style = 3)
+  pb <- txtProgressBar(0, ncol(vals_smooth), style = 3)
   
   if (method == "uniform") {
-    for (i in seq_len(ncol(lc_smooth))) {
+    for (i in seq_len(ncol(vals_smooth))) {
       setTxtProgressBar(pb, i)
       # extract values
-      lc_sub <- lc[, neigh[[i]]]
+      vals_sub <- vals[, neigh[[i]]]
       # calculate average
-      lc_smooth[, i] <- rowMeans(lc_sub)
+      vals_smooth[, i] <- rowMeans(vals_sub)
     }
   }
   
   if (method == "kernel") {
-    for (i in seq_len(ncol(lc_smooth))) {
+    for (i in seq_len(ncol(vals_smooth))) {
       setTxtProgressBar(pb, i)
       # extract values and weights
-      lc_sub <- lc[, neigh[[i]]]
-      weights_rep <- t(replicate(nrow(lc_sub), weights[[i]]))
-      stopifnot(all(dim(lc_sub) == dim(weights_rep)))
+      vals_sub <- vals[, neigh[[i]]]
+      weights_rep <- t(replicate(nrow(vals_sub), weights[[i]]))
+      stopifnot(all(dim(vals_sub) == dim(weights_rep)))
       # calculate weighted average
-      vals <- rowSums(lc_sub * weights_rep) / sum(weights[[i]])
-      lc_smooth[, i] <- vals
+      out <- rowSums(vals_sub * weights_rep) / sum(weights[[i]])
+      vals_smooth[, i] <- out
     }
   }
   
   close(pb)
   
-  stopifnot(nrow(lc_smooth) == nrow(spe))
-  stopifnot(ncol(lc_smooth) == ncol(spe))
-  rownames(lc_smooth) <- rownames(spe)
-  colnames(lc_smooth) <- colnames(spe)
+  stopifnot(nrow(vals_smooth) == nrow(spe))
+  stopifnot(ncol(vals_smooth) == ncol(spe))
+  rownames(vals_smooth) <- rownames(spe)
+  colnames(vals_smooth) <- colnames(spe)
   
   # store in object
-  assays(spe)[["logcounts_smooth"]] <- lc_smooth
+  assays(spe)[[assay_name_smooth]] <- vals_smooth
+  
+  # add logcounts
+  if (calc_logcounts) {
+    lc_smooth <- logNormCounts(spe, exprs_values = assay_name_smooth)
+    assays(spe)[["logcounts_smooth"]] <- lc_smooth
+  }
   
   spe
 }

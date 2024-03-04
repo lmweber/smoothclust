@@ -5,7 +5,7 @@ Description: Spatial clustering algorithm for spatial transcriptomics data
     based on the principle of smoothing expression measurements across 
     neighboring spatial locations. The algorithm can be used to define spatial 
     domains consisting of a single cell type or a consistent mixture of cell 
-    types, with clearly defined spatial boundaries.
+    types with smooth spatial boundaries.
 Authors@R: c(
     person("Lukas M.", "Weber", 
            email = "lmweberedu@gmail.com", 
@@ -22,11 +22,11 @@ biocViews:
     GeneExpression
 Imports: 
     SpatialExperiment, 
-    SingleCellExperiment, 
     SummarizedExperiment, 
     spdep, 
     methods, 
-    utils
+    utils, 
+    scuttle
 VignetteBuilder: knitr
 Suggests: 
     STexampleData, 
