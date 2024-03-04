@@ -104,7 +104,7 @@
 #' 
 smoothclust <- function(input, method = c("uniform", "kernel"), 
                         assay_name = "counts", 
-                        bandwidth = 0.05, truncate = 0.05, 
+                        bandwidth = 0.1, truncate = 0.05, 
                         assay_name_smooth = "counts_smooth", 
                         calc_logcounts = TRUE) {
   
