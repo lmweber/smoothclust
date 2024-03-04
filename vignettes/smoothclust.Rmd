@@ -1,14 +1,14 @@
 ---
-title: "smoothclust"
+title: "Smoothclust Tutorial"
 author: 
   - name: Lukas M. Weber
-    affiliation: "Boston University School of Public Health"
+    affiliation: "Boston University"
 package: smoothclust
 output: 
   BiocStyle::html_document: 
     toc_float: true
 vignette: >
-  %\VignetteIndexEntry{smoothclust}
+  %\VignetteIndexEntry{Smoothclust Tutorial}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
@@ -16,7 +16,7 @@ vignette: >
 
 # Introduction
 
-`smoothclust` is a spatial clustering algorithm for spatial transcriptomics data. Currently under development.
+`smoothclust` is a spatial clustering algorithm for spatial transcriptomics data.
 
 
 # Installation
@@ -31,7 +31,68 @@ To add
 
 # Tutorial
 
-To add
+```{r, message=FALSE}
+library(smoothclust)
+library(STexampleData)
+library(scater)
+library(scran)
+library(ggspavis)
+```
+
+```{r}
+# load data
+spe <- Visium_humanDLPFC()
+
+# keep spots over tissue
+spe <- spe[, colData(spe)$in_tissue == 1]
+```
+
+```{r}
+# run smoothclust
+spe <- smoothclust(spe)
+dim(spe)
+```
+
+```{r}
+# preprocessing for downstream clustering
+
+# remove mitochondrial genes
+is_mito <- grepl("(^MT-)|(^mt-)", rowData(spe)$gene_name)
+table(is_mito)
+spe <- spe[!is_mito, ]
+dim(spe)
+
+# select highly variable genes (HVGs)
+dec <- modelGeneVar(assays(spe)[["logcounts_smooth"]])
+top_hvgs <- getTopHVGs(dec, prop = 0.1)
+length(top_hvgs)
+spe <- spe[top_hvgs, ]
+dim(spe)
+
+# compute PCA
+set.seed(123)
+spe <- runPCA(spe, exprs_values = "logcounts_smooth")
+
+# compute UMAP on top 50 PCs
+set.seed(123)
+spe <- runUMAP(spe, dimred = "PCA")
+colnames(reducedDim(spe, "UMAP")) <- paste0("UMAP", 1:2)
+```
+
+```{r}
+# run k-means clustering
+set.seed(123)
+k <- 8
+clust <- kmeans(reducedDim(spe, "PCA"), centers = k)$cluster
+table(clust)
+colLabels(spe) <- factor(clust)
+```
+
+```{r}
+# plot clusters
+plotSpots(spe, annotate = "label", palette = "libd_layer_colors")
+#plotSpots(spe, annotate = "label", palette = unname(palette.colors(36, "Polychrome 36")))
+```
 
 
 # Session information

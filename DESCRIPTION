@@ -29,8 +29,10 @@ Imports:
     scuttle
 VignetteBuilder: knitr
 Suggests: 
+    BiocStyle, 
+    knitr, 
     STexampleData, 
     scran, 
-    BiocStyle, 
-    knitr
+    scater, 
+    ggspavis
 RoxygenNote: 7.2.3
