@@ -71,7 +71,7 @@
 #' @importFrom spdep dnearneigh nbdists
 #' @importFrom methods is as
 #' @importFrom utils txtProgressBar setTxtProgressBar
-#' @importFrom scuttle logNormCounts
+#' @importFrom scuttle normalizeCounts
 #' 
 #' @export
 #' 
@@ -205,7 +205,7 @@ smoothclust <- function(input, method = c("uniform", "kernel"),
   
   # add logcounts
   if (calc_logcounts) {
-    lc_smooth <- logNormCounts(spe, exprs_values = assay_name_smooth)
+    lc_smooth <- normalizeCounts(vals_smooth)
     assays(spe)[["logcounts_smooth"]] <- lc_smooth
   }
   
