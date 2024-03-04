@@ -56,7 +56,7 @@ spe <- smoothclust(spe)
 ```
 
 ```{r}
-# calculate log-transformed normalized counts (logcounts)
+# calculate logcounts
 spe <- logNormCounts(spe)
 ```
 
@@ -69,7 +69,7 @@ table(is_mito)
 spe <- spe[!is_mito, ]
 dim(spe)
 
-# select highly variable genes (HVGs)
+# select top highly variable genes (HVGs)
 dec <- modelGeneVar(spe)
 top_hvgs <- getTopHVGs(dec, prop = 0.1)
 length(top_hvgs)
@@ -88,7 +88,7 @@ spe <- runPCA(spe)
 ```{r}
 # run k-means clustering
 set.seed(123)
-k <- 8
+k <- 7
 clust <- kmeans(reducedDim(spe, "PCA"), centers = k)$cluster
 table(clust)
 colLabels(spe) <- factor(clust)
@@ -96,8 +96,10 @@ colLabels(spe) <- factor(clust)
 
 ```{r}
 # plot clusters
-plotSpots(spe, annotate = "label", palette = "libd_layer_colors")
-#plotSpots(spe, annotate = "label", palette = unname(palette.colors(36, "Polychrome 36")))
+pal8 <- "libd_layer_colors"
+pal36 <- unname(palette.colors(36, "Polychrome 36"))
+
+plotSpots(spe, annotate = "label", palette = pal8)
 ```
 
 
