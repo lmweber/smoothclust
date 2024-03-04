@@ -34,8 +34,9 @@ To add
 ```{r, message=FALSE}
 library(smoothclust)
 library(STexampleData)
-library(scater)
+library(scuttle)
 library(scran)
+library(scater)
 library(ggspavis)
 ```
 
@@ -45,12 +46,19 @@ spe <- Visium_humanDLPFC()
 
 # keep spots over tissue
 spe <- spe[, colData(spe)$in_tissue == 1]
+
+dim(spe)
 ```
 
 ```{r}
 # run smoothclust
 spe <- smoothclust(spe)
-dim(spe)
+```
+
+```{r}
+# calculate logcounts
+lc_smooth <- normalizeCounts(assays(spe)[["counts_smooth"]])
+assays(spe)[["logcounts_smooth"]] <- lc_smooth
 ```
 
 ```{r}
@@ -68,6 +76,10 @@ top_hvgs <- getTopHVGs(dec, prop = 0.1)
 length(top_hvgs)
 spe <- spe[top_hvgs, ]
 dim(spe)
+```
+
+```{r}
+# dimensionality reduction
 
 # compute PCA
 set.seed(123)

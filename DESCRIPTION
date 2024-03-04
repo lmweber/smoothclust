@@ -25,13 +25,13 @@ Imports:
     SummarizedExperiment, 
     spdep, 
     methods, 
-    utils, 
-    scuttle
+    utils
 VignetteBuilder: knitr
 Suggests: 
     BiocStyle, 
     knitr, 
     STexampleData, 
+    scuttle, 
     scran, 
     scater, 
     ggspavis

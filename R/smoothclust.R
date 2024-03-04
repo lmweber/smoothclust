@@ -11,16 +11,15 @@
 #' 
 #' @param input Input data, assumed to be provided as \code{SpatialExperiment}
 #'   object containing spatial coordinates in \code{spatialCoords} slot and
-#'   expression counts (raw or transformed) in \code{assays} slot.
+#'   expression counts in \code{assays} slots.
 #' 
 #' @param assay_name Name of \code{assay} in input object containing expression
 #'   count values to be smoothed. Usually this will be either \code{counts} (raw
 #'   counts) or \code{logcounts} (log-transformed normalized counts). We
-#'   recommend using raw counts (\code{counts}) if available, in which case the
-#'   methodology will apply smoothing to the raw counts and then calculate
-#'   logcounts. Alternatively, logcounts (\code{logcounts}) may also be used as
-#'   the input, in which case the smoothed values represent geometric averages,
-#'   which are more difficult to interpret. Default = \code{counts}.
+#'   recommend using raw counts (\code{counts}) if available, for easier
+#'   interpretability of the averaging. Alternatively, logcounts
+#'   (\code{logcounts}) may also be used, in which case the smoothed values
+#'   represent geometric averages. Default = \code{counts}.
 #' 
 #' @param method Method used for smoothing. The \code{uniform} method calculates
 #'   unweighted averages across spatial locations within a circular window with
@@ -51,19 +50,14 @@
 #'   efficiency. Only used for \code{method = "kernel"}. Default = 0.05.
 #' 
 #' @param assay_name_smooth Name of assay to store smoothed values. Default =
-#'   \code{counts_smooth}. Alternatively, set to \code{logcounts_smooth} if
+#'   \code{"counts_smooth"}. Alternatively, set to \code{"logcounts_smooth"} if
 #'   logcounts were provided instead of raw counts for the input values.
 #' 
-#' @param calc_logcounts Whether to calculate logcounts using smoothed values of
-#'   raw counts and store these in new assay named \code{logcounts_smooth} in
-#'   output object. Uses methods from \code{scran} package to calculate
-#'   normalization and log-transformation. Default = TRUE.
 #' 
-#' 
-#' @return Returns the \code{SpatialExperiment} object with new assays (default
-#'   names \code{counts_smooth} and \code{logcounts_smooth}) containing
-#'   spatially smoothed expression values, which can be used as the input for
-#'   further downstream analyses such as clustering.
+#' @return Returns the \code{SpatialExperiment} object with a new assay (default
+#'   name \code{"counts_smooth"}) containing spatially smoothed expression
+#'   values, which can be used as the input for further downstream analyses such
+#'   as clustering.
 #' 
 #' 
 #' @importFrom SpatialExperiment spatialCoords
@@ -71,30 +65,17 @@
 #' @importFrom spdep dnearneigh nbdists
 #' @importFrom methods is as
 #' @importFrom utils txtProgressBar setTxtProgressBar
-#' @importFrom scuttle normalizeCounts
 #' 
 #' @export
 #' 
 #' @examples
-#' library(SpatialExperiment)
 #' library(STexampleData)
-#' library(scran)
 #' 
-#' # download data object
+#' # load data
 #' spe <- Visium_humanDLPFC()
+#' 
+#' # keep spots over tissue
 #' spe <- spe[, colData(spe)$in_tissue == 1]
-#' 
-#' # calculate highly variable genes (HVGs)
-#' spe <- logNormCounts(spe)
-#' is_mito <- grepl("(^MT-)|(^mt-)", rowData(spe)$gene_name)
-#' spe <- spe[!is_mito, ]
-#' # keep full object for plotting
-#' spe_full <- spe
-#' 
-#' dec <- modelGeneVar(spe)
-#' top_hvgs <- getTopHVGs(dec, prop = 0.1)
-#' spe <- spe[top_hvgs, ]
-#' dim(spe)
 #' 
 #' # run smoothclust
 #' spe <- smoothclust(spe)
@@ -102,11 +83,12 @@
 #' # check
 #' assayNames(spe)
 #' 
+#' # see vignette for extended example including downstream analyses
+#' 
 smoothclust <- function(input, method = c("uniform", "kernel"), 
                         assay_name = "counts", 
-                        bandwidth = 0.1, truncate = 0.05, 
-                        assay_name_smooth = "counts_smooth", 
-                        calc_logcounts = TRUE) {
+                        bandwidth = 0.05, truncate = 0.05, 
+                        assay_name_smooth = "counts_smooth") {
   
   method <- match.arg(method, c("uniform", "kernel"))
   
@@ -202,12 +184,6 @@ smoothclust <- function(input, method = c("uniform", "kernel"),
   
   # store in object
   assays(spe)[[assay_name_smooth]] <- vals_smooth
-  
-  # add logcounts
-  if (calc_logcounts) {
-    lc_smooth <- normalizeCounts(vals_smooth)
-    assays(spe)[["logcounts_smooth"]] <- lc_smooth
-  }
   
   spe
 }
