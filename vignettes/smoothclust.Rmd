@@ -56,9 +56,8 @@ spe <- smoothclust(spe)
 ```
 
 ```{r}
-# calculate logcounts
-lc_smooth <- normalizeCounts(assays(spe)[["counts_smooth"]])
-assays(spe)[["logcounts_smooth"]] <- lc_smooth
+# calculate log-transformed normalized counts (logcounts)
+spe <- logNormCounts(spe)
 ```
 
 ```{r}
@@ -71,7 +70,7 @@ spe <- spe[!is_mito, ]
 dim(spe)
 
 # select highly variable genes (HVGs)
-dec <- modelGeneVar(assays(spe)[["logcounts_smooth"]])
+dec <- modelGeneVar(spe)
 top_hvgs <- getTopHVGs(dec, prop = 0.1)
 length(top_hvgs)
 spe <- spe[top_hvgs, ]
@@ -83,12 +82,7 @@ dim(spe)
 
 # compute PCA
 set.seed(123)
-spe <- runPCA(spe, exprs_values = "logcounts_smooth")
-
-# compute UMAP on top 50 PCs
-set.seed(123)
-spe <- runUMAP(spe, dimred = "PCA")
-colnames(reducedDim(spe, "UMAP")) <- paste0("UMAP", 1:2)
+spe <- runPCA(spe)
 ```
 
 ```{r}

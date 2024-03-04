@@ -11,15 +11,15 @@
 #' 
 #' @param input Input data, assumed to be provided as \code{SpatialExperiment}
 #'   object containing spatial coordinates in \code{spatialCoords} slot and
-#'   expression counts in \code{assays} slots.
+#'   expression counts in \code{assay} slots.
 #' 
 #' @param assay_name Name of \code{assay} in input object containing expression
-#'   count values to be smoothed. Usually this will be either \code{counts} (raw
-#'   counts) or \code{logcounts} (log-transformed normalized counts). We
-#'   recommend using raw counts (\code{counts}) if available, for easier
-#'   interpretability of the averaging. Alternatively, logcounts
-#'   (\code{logcounts}) may also be used, in which case the smoothed values
-#'   represent geometric averages. Default = \code{counts}.
+#'   count values to be smoothed. In most cases, this will be \code{counts},
+#'   containing raw expression counts. Alternatively, \code{logcounts} or any
+#'   other assay may also be used. If \code{logcounts} are used, the smoothed
+#'   values represent geometric averages, which are more difficult to interpret.
+#'   We recommend using raw counts (\code{counts}) for easier interpretation of
+#'   the averages. Default = \code{counts}.
 #' 
 #' @param method Method used for smoothing. The \code{uniform} method calculates
 #'   unweighted averages across spatial locations within a circular window with
@@ -49,15 +49,15 @@
 #'   Kernel weights below this value are set to zero for computational
 #'   efficiency. Only used for \code{method = "kernel"}. Default = 0.05.
 #' 
-#' @param assay_name_smooth Name of assay to store smoothed values. Default =
-#'   \code{"counts_smooth"}. Alternatively, set to \code{"logcounts_smooth"} if
-#'   logcounts were provided instead of raw counts for the input values.
+#' @param keep_unsmoothed Whether to keep unsmoothed expression values in a
+#'   separate \code{assay}. If TRUE, these will be stored in an \code{assay}
+#'   named \code{<assay_name>_unsmoothed} (e.g. \code{counts_unsmoothed}).
 #' 
 #' 
-#' @return Returns the \code{SpatialExperiment} object with a new assay (default
-#'   name \code{"counts_smooth"}) containing spatially smoothed expression
-#'   values, which can be used as the input for further downstream analyses such
-#'   as clustering.
+#' @return Returns the \code{SpatialExperiment} object with spatially smoothed
+#'   smoothed expression values stored in the \code{assay} named
+#'   \code{assay_name} (e.g. \code{counts}), which can then be used as the input
+#'   for further downstream analyses such as clustering.
 #' 
 #' 
 #' @importFrom SpatialExperiment spatialCoords
@@ -80,15 +80,12 @@
 #' # run smoothclust
 #' spe <- smoothclust(spe)
 #' 
-#' # check
-#' assayNames(spe)
-#' 
 #' # see vignette for extended example including downstream analyses
 #' 
 smoothclust <- function(input, method = c("uniform", "kernel"), 
                         assay_name = "counts", 
                         bandwidth = 0.05, truncate = 0.05, 
-                        assay_name_smooth = "counts_smooth") {
+                        keep_unsmoothed = TRUE) {
   
   method <- match.arg(method, c("uniform", "kernel"))
   
@@ -182,8 +179,14 @@ smoothclust <- function(input, method = c("uniform", "kernel"),
   rownames(vals_smooth) <- rownames(spe)
   colnames(vals_smooth) <- colnames(spe)
   
-  # store in object
-  assays(spe)[[assay_name_smooth]] <- vals_smooth
+  # keep unsmoothed values
+  if (keep_unsmoothed) {
+    assay_name_unsmoothed <- paste0(assay_name, "_unsmoothed")
+    assays(spe)[[assay_name_unsmoothed]] <- assays(spe)[[assay_name]]
+  }
+  
+  # store smoothed values in object
+  assays(spe)[[assay_name]] <- vals_smooth
   
   spe
 }
