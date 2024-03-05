@@ -9,23 +9,29 @@ smoothness_metric(spatialcoords, labels, k = 6)
 \arguments{
 \item{spatialcoords}{Numeric matrix containing spatial coordinates of points,
 formatted as nrow = number of points, ncol = 2 (assuming x and y
-dimensions). For example, `spatialcoords = spatialCoords(spe)`.}
+dimensions). For example, `spatialcoords = spatialCoords(spe)` if using a
+\code{SpatialExperiment} object.}
 
 \item{labels}{Numeric vector of cluster labels for each point. For example,
-`labels <- as.numeric(colData(spe)$label)`.}
+`labels <- as.numeric(colData(spe)$label)` if using a
+\code{SpatialExperiment} object.}
 
 \item{k}{Number of k nearest neighbors to use in calculation. Default = 6
 (from 10x Genomics Visium platform).}
 }
 \value{
-Returns value of evaluation metric.
+Returns a list containing (i) a vector of values at each point (i.e.
+  the number of nearest neighbors that are from a different cluster at each
+  point) and (ii) the average value across all points.
 }
 \description{
 Function for clustering smoothness evaluation metric
 }
 \details{
-Function to calculate smoothness of cluster boundaries, defined as average
-number of nearest neighbors per point that are from a different cluster.
+Function to calculate clustering smoothness evaluation metric, defined as the
+average number of nearest neighbors per point that are from a different
+cluster. This metric can be used to quantify and compare the relative
+smoothness of cluster boundaries.
 }
 \examples{
 library(STexampleData)
@@ -65,6 +71,11 @@ clust <- kmeans(reducedDim(spe, "PCA"), centers = k)$cluster
 colLabels(spe) <- factor(clust)
 
 # calculate smoothness metric
-smoothness_metric(spatialCoords(spe), as.numeric(colData(spe)$label))
+res <- smoothness_metric(spatialCoords(spe), as.numeric(colData(spe)$label))
+
+# results
+str(res)
+head(res$n_discordant)
+res$mean_discordant
 
 }

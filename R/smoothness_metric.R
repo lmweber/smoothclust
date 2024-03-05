@@ -2,22 +2,28 @@
 #' 
 #' Function for clustering smoothness evaluation metric
 #' 
-#' Function to calculate smoothness of cluster boundaries, defined as average
-#' number of nearest neighbors per point that are from a different cluster.
+#' Function to calculate clustering smoothness evaluation metric, defined as the
+#' average number of nearest neighbors per point that are from a different
+#' cluster. This metric can be used to quantify and compare the relative
+#' smoothness of cluster boundaries.
 #' 
 #' 
 #' @param spatialcoords Numeric matrix containing spatial coordinates of points,
 #'   formatted as nrow = number of points, ncol = 2 (assuming x and y
-#'   dimensions). For example, `spatialcoords = spatialCoords(spe)`.
+#'   dimensions). For example, `spatialcoords = spatialCoords(spe)` if using a
+#'   \code{SpatialExperiment} object.
 #' 
 #' @param labels Numeric vector of cluster labels for each point. For example,
-#'   `labels <- as.numeric(colData(spe)$label)`.
+#'   `labels <- as.numeric(colData(spe)$label)` if using a
+#'   \code{SpatialExperiment} object.
 #' 
 #' @param k Number of k nearest neighbors to use in calculation. Default = 6
 #'   (from 10x Genomics Visium platform).
 #' 
 #' 
-#' @return Returns value of evaluation metric.
+#' @return Returns a list containing (i) a vector of values at each point (i.e.
+#'   the number of nearest neighbors that are from a different cluster at each
+#'   point) and (ii) the average value across all points.
 #' 
 #' 
 #' @importFrom spdep knearneigh
@@ -62,7 +68,12 @@
 #' colLabels(spe) <- factor(clust)
 #' 
 #' # calculate smoothness metric
-#' smoothness_metric(spatialCoords(spe), as.numeric(colData(spe)$label))
+#' res <- smoothness_metric(spatialCoords(spe), as.numeric(colData(spe)$label))
+#' 
+#' # results
+#' str(res)
+#' head(res$n_discordant)
+#' res$mean_discordant
 #' 
 smoothness_metric <- function(spatialcoords, labels, k = 6) {
   
@@ -80,11 +91,11 @@ smoothness_metric <- function(spatialcoords, labels, k = 6) {
   
   # calculate number of non-matching labels
   stopifnot(length(labels) == nrow(neigh_labels))
-  res <- rep(0, length(labels))
+  vals <- rep(0, length(labels))
   for (i in seq_len(ncol(neigh_labels))) {
-    res <- res + as.numeric(labels != neigh_labels[, i])
+    vals <- vals + as.numeric(labels != neigh_labels[, i])
   }
   
-  # average value
-  mean(res)
+  # return vector and average value
+  list(n_discordant = vals, mean_discordant = mean(vals))
 }
