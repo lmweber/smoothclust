@@ -48,7 +48,7 @@
 #'   computational efficiency. Default = 0.05.
 #' 
 #' @param k Number of nearest neighbors for \code{method = "knn"}. Only used for
-#'   \code{method == "knn"}. Default = 6 (based on honeycomb pattern for 10x
+#'   \code{method == "knn"}. Default = 18 (based on honeycomb pattern for 10x
 #'   Genomics Visium platform).
 #' 
 #' @param truncate Truncation threshold parameter if \code{method = "kernel"}.
@@ -90,7 +90,7 @@
 #' 
 smoothclust <- function(input, method = c("uniform", "kernel", "knn"), 
                         assay_name = "counts", 
-                        bandwidth = 0.05, truncate = 0.05, k = 6, 
+                        bandwidth = 0.05, truncate = 0.05, k = 18, 
                         keep_unsmoothed = TRUE) {
   
   method <- match.arg(method, c("uniform", "kernel", "knn"))

@@ -10,7 +10,7 @@ smoothclust(
   assay_name = "counts",
   bandwidth = 0.05,
   truncate = 0.05,
-  k = 6,
+  k = 18,
   keep_unsmoothed = TRUE
 )
 }
@@ -58,7 +58,7 @@ Kernel weights below this value are set to zero for computational
 efficiency. Only used for \code{method = "kernel"}. Default = 0.05.}
 
 \item{k}{Number of nearest neighbors for \code{method = "knn"}. Only used for
-\code{method == "knn"}. Default = 6 (based on honeycomb pattern for 10x
+\code{method == "knn"}. Default = 18 (based on honeycomb pattern for 10x
 Genomics Visium platform).}
 
 \item{keep_unsmoothed}{Whether to keep unsmoothed expression values in a
