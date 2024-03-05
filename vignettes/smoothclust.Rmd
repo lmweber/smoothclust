@@ -58,7 +58,7 @@ dim(spe)
 
 Run smoothclust with default parameter settings:
 
-```{r}
+```{r, results="hide"}
 # run smoothclust
 spe <- smoothclust(spe)
 ```
