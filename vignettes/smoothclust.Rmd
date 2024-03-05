@@ -52,7 +52,7 @@ dim(spe)
 
 ```{r}
 # run smoothclust
-spe <- smoothclust(spe, method = "uniform", bandwidth = 0.04)
+spe <- smoothclust(spe)
 ```
 
 ```{r}
