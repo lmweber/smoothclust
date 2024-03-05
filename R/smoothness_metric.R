@@ -8,7 +8,7 @@
 #' 
 #' @param spatialcoords Numeric matrix containing spatial coordinates of points,
 #'   formatted as nrow = number of points, ncol = 2 (assuming x and y
-#'   dimensions). For example, `spcoords = spatialCoords(spe)`.
+#'   dimensions). For example, `spatialcoords = spatialCoords(spe)`.
 #' 
 #' @param labels Numeric vector of cluster labels for each point. For example,
 #'   `labels <- as.numeric(colData(spe)$label)`.
