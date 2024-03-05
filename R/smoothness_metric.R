@@ -30,7 +30,7 @@
 smoothness_metric <- function(spatialcoords, labels, k = 6) {
   
   stopifnot(length(labels) == nrow(spatialcoords))
-  stopifnot(ncol(spatialcoords) != 2)
+  stopifnot(ncol(spatialcoords) == 2)
   
   # calculate k nearest neighbors for each point
   neigh <- knearneigh(spatialcoords, k = k)$nn
