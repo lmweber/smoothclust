@@ -16,20 +16,22 @@ vignette: >
 
 # Introduction
 
-`smoothclust` is a spatial clustering algorithm for spatial transcriptomics data.
+`smoothclust` is a spatial clustering algorithm for spatial transcriptomics data. Currently under development.
 
 
 # Installation
 
-To add
+Install R package from GitHub: `remotes::install_github("lmweber/smoothclust")`
 
 
 # Input data format
 
-To add
+Input in current version is assumed to be a `SpatialExperiment` object.
 
 
 # Tutorial
+
+Example demonstrating how to run `smoothclust` on a 10x Genomics Visium dataset (human DLPFC dataset).
 
 ```{r, message=FALSE}
 library(smoothclust)
@@ -39,6 +41,9 @@ library(scran)
 library(scater)
 library(ggspavis)
 ```
+
+
+Load dataset from `STexampleData` package:
 
 ```{r}
 # load data
@@ -50,18 +55,27 @@ spe <- spe[, colData(spe)$in_tissue == 1]
 dim(spe)
 ```
 
+
+Run smoothclust with default parameter settings:
+
 ```{r}
 # run smoothclust
 spe <- smoothclust(spe)
 ```
+
+
+Calculate log-transformed normalized counts (logcounts) on smoothed values:
 
 ```{r}
 # calculate logcounts
 spe <- logNormCounts(spe)
 ```
 
+
+Run clustering:
+
 ```{r}
-# preprocessing for downstream clustering
+# preprocessing steps for downstream clustering
 
 # remove mitochondrial genes
 is_mito <- grepl("(^MT-)|(^mt-)", rowData(spe)$gene_name)
@@ -71,6 +85,7 @@ dim(spe)
 
 # select top highly variable genes (HVGs)
 dec <- modelGeneVar(spe)
+#dec <- modelGeneVar(logNormCounts(spe))  # if running before smoothclust
 top_hvgs <- getTopHVGs(dec, prop = 0.1)
 length(top_hvgs)
 spe <- spe[top_hvgs, ]
@@ -88,18 +103,24 @@ spe <- runPCA(spe)
 ```{r}
 # run k-means clustering
 set.seed(123)
-k <- 7
+k <- 25
 clust <- kmeans(reducedDim(spe, "PCA"), centers = k)$cluster
 table(clust)
 colLabels(spe) <- factor(clust)
 ```
 
+
+Plot clustering:
+
 ```{r}
-# plot clusters
 pal8 <- "libd_layer_colors"
 pal36 <- unname(palette.colors(36, "Polychrome 36"))
 
+# plot clusters
 plotSpots(spe, annotate = "label", palette = pal8)
+
+# plot reference cluster labels
+plotSpots(spe, annotate = "ground_truth", palette = pal8)
 ```
 
 
