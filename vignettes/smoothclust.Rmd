@@ -85,7 +85,6 @@ dim(spe)
 
 # select top highly variable genes (HVGs)
 dec <- modelGeneVar(spe)
-#dec <- modelGeneVar(logNormCounts(spe))  # if running before smoothclust
 top_hvgs <- getTopHVGs(dec, prop = 0.1)
 length(top_hvgs)
 spe <- spe[top_hvgs, ]
@@ -103,7 +102,7 @@ spe <- runPCA(spe)
 ```{r}
 # run k-means clustering
 set.seed(123)
-k <- 25
+k <- 5
 clust <- kmeans(reducedDim(spe, "PCA"), centers = k)$cluster
 table(clust)
 colLabels(spe) <- factor(clust)
