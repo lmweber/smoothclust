@@ -2,16 +2,17 @@
 % Please edit documentation in R/smoothness_metric.R
 \name{smoothness_metric}
 \alias{smoothness_metric}
-\title{Function for evaluation metric}
+\title{Function for smoothness metric}
 \usage{
-smoothness_metric(input, label = "label", k = 6)
+smoothness_metric(spatialcoords, labels, k = 6)
 }
 \arguments{
-\item{input}{Input object, assumed to be a \code{SpatialExperiment} object
-containing a column of cluster labels in `colData`.}
+\item{spatialcoords}{Numeric matrix containing spatial coordinates of points,
+formatted as nrow = number of points, ncol = 2 (assuming x and y
+dimensions). For example, `spcoords = spatialCoords(spe)`.}
 
-\item{label}{Name of column in `colData` containing cluster labels. Default =
-"label".}
+\item{labels}{Numeric vector of cluster labels for each point. For example,
+`labels <- as.numeric(colData(spe)$label)`.}
 
 \item{k}{Number of k nearest neighbors to use in calculation. Default = 6
 (from 10x Genomics Visium platform).}
@@ -27,6 +28,6 @@ Function to calculate smoothness of cluster boundaries, defined as average
 number of nearest neighbors per point that are from a different cluster.
 }
 \examples{
-# Example shown in vignette.
+# Example to be shown in vignette.
 
 }
