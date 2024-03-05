@@ -52,7 +52,7 @@ dim(spe)
 
 ```{r}
 # run smoothclust
-spe <- smoothclust(spe)
+spe <- smoothclust(spe, method = "knn", k = 6)
 ```
 
 ```{r}

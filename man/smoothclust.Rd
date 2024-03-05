@@ -6,10 +6,11 @@
 \usage{
 smoothclust(
   input,
-  method = c("uniform", "kernel"),
+  method = c("uniform", "kernel", "knn"),
   assay_name = "counts",
   bandwidth = 0.05,
   truncate = 0.05,
+  k = 6,
   keep_unsmoothed = TRUE
 )
 }
@@ -27,7 +28,9 @@ exponential kernel applied to Euclidean distances with a length scale
 parameter equal to \code{bandwidth}, which provides a more sophisticated
 approach to smoothing out spatial variability but may be affected by
 sparsity due to sampling variability (especially sparsity at the index
-point), and is computationally slower. Default = \code{uniform}.}
+point), and is computationally slower. The \code{knn} method calculates an
+average across the index point and k nearest neighbors. Default =
+\code{uniform}.}
 
 \item{assay_name}{Name of \code{assay} in input object containing expression
 count values to be smoothed. In most cases, this will be \code{counts},
@@ -53,6 +56,10 @@ computational efficiency. Default = 0.05.}
 \item{truncate}{Truncation threshold parameter if \code{method = "kernel"}.
 Kernel weights below this value are set to zero for computational
 efficiency. Only used for \code{method = "kernel"}. Default = 0.05.}
+
+\item{k}{Number of nearest neighbors for \code{method = "knn"}. Only used for
+\code{method == "knn"}. Default = 6 (based on honeycomb pattern for 10x
+Genomics Visium platform).}
 
 \item{keep_unsmoothed}{Whether to keep unsmoothed expression values in a
 separate \code{assay}. If TRUE, these will be stored in an \code{assay}

@@ -30,7 +30,9 @@
 #'   parameter equal to \code{bandwidth}, which provides a more sophisticated
 #'   approach to smoothing out spatial variability but may be affected by
 #'   sparsity due to sampling variability (especially sparsity at the index
-#'   point), and is computationally slower. Default = \code{uniform}.
+#'   point), and is computationally slower. The \code{knn} method calculates an
+#'   average across the index point and k nearest neighbors. Default =
+#'   \code{uniform}.
 #' 
 #' @param bandwidth Bandwidth parameter for smoothing, expressed as proportion
 #'   of width or height (whichever is greater) of tissue area. Smoothing is
@@ -44,6 +46,10 @@
 #'   of the width or height (whichever is greater) of the tissue area. Weights
 #'   for \code{method = "kernel"} are truncated at small values for
 #'   computational efficiency. Default = 0.05.
+#' 
+#' @param k Number of nearest neighbors for \code{method = "knn"}. Only used for
+#'   \code{method == "knn"}. Default = 6 (based on honeycomb pattern for 10x
+#'   Genomics Visium platform).
 #' 
 #' @param truncate Truncation threshold parameter if \code{method = "kernel"}.
 #'   Kernel weights below this value are set to zero for computational
@@ -62,7 +68,7 @@
 #' 
 #' @importFrom SpatialExperiment spatialCoords
 #' @importFrom SummarizedExperiment assays 'assays<-' assayNames
-#' @importFrom spdep dnearneigh nbdists
+#' @importFrom spdep dnearneigh nbdists knearneigh
 #' @importFrom methods is as
 #' @importFrom utils txtProgressBar setTxtProgressBar
 #' 
@@ -82,12 +88,12 @@
 #' 
 #' # see vignette for extended example including downstream analyses
 #' 
-smoothclust <- function(input, method = c("uniform", "kernel"), 
+smoothclust <- function(input, method = c("uniform", "kernel", "knn"), 
                         assay_name = "counts", 
-                        bandwidth = 0.05, truncate = 0.05, 
+                        bandwidth = 0.05, truncate = 0.05, k = 6, 
                         keep_unsmoothed = TRUE) {
   
-  method <- match.arg(method, c("uniform", "kernel"))
+  method <- match.arg(method, c("uniform", "kernel", "knn"))
   
   spe <- input
   
@@ -98,11 +104,13 @@ smoothclust <- function(input, method = c("uniform", "kernel"),
   
   spatialcoords <- spatialCoords(spe)
   
-  # convert bandwidth to same units as distances
-  range_x <- abs(diff(range(spatialcoords[, 1])))
-  range_y <- abs(diff(range(spatialcoords[, 2])))
-  range_max <- max(range_x, range_y)
-  bandwidth_scaled <- bandwidth * range_max
+  if (method %in% c("uniform", "kernel")) {
+    # convert bandwidth to same units as distances
+    range_x <- abs(diff(range(spatialcoords[, 1])))
+    range_y <- abs(diff(range(spatialcoords[, 2])))
+    range_max <- max(range_x, range_y)
+    bandwidth_scaled <- bandwidth * range_max
+  }
   
   if (method == "uniform") {
     # calculate neighbors (note self is excluded)
@@ -116,14 +124,16 @@ smoothclust <- function(input, method = c("uniform", "kernel"),
     dists <- nbdists(neigh, coords = spatialcoords)
   }
   
-  # put back self within set of neighbors for each point
-  stopifnot(length(neigh) == ncol(spe))
-  # include index of self point
-  neigh <- mapply(c, as.list(seq_len(ncol(spe))), neigh, SIMPLIFY = FALSE)
-  if (method == "kernel") {
-    stopifnot(length(dists) == ncol(spe))
-    # include distance (zero) to self point
-    dists <- mapply(c, 0, dists, SIMPLIFY = FALSE)
+  if (method %in% c("uniform", "kernel")) {
+    # put back self within set of neighbors for each point
+    stopifnot(length(neigh) == ncol(spe))
+    # include index of self point
+    neigh <- mapply(c, as.list(seq_len(ncol(spe))), neigh, SIMPLIFY = FALSE)
+    if (method == "kernel") {
+      stopifnot(length(dists) == ncol(spe))
+      # include distance (zero) to self point
+      dists <- mapply(c, 0, dists, SIMPLIFY = FALSE)
+    }
   }
   
   # calculate weights for kernel method
@@ -140,6 +150,13 @@ smoothclust <- function(input, method = c("uniform", "kernel"),
     
     weights <- mapply(function(w, k) {w[k]}, weights, keep)
     neigh <- mapply(function(n, k) {n[k]}, neigh, keep)
+  }
+  
+  if (method == "knn") {
+    neigh <- knearneigh(spatialcoords, k = k)$nn
+    # include index point
+    stopifnot(nrow(neigh) == ncol(spe))
+    neigh <- cbind(seq_len(nrow(neigh)), neigh)
   }
   
   # calculate smoothed values
@@ -169,6 +186,17 @@ smoothclust <- function(input, method = c("uniform", "kernel"),
       # calculate weighted average
       out <- rowSums(vals_sub * weights_rep) / sum(weights[[i]])
       vals_smooth[, i] <- out
+    }
+  }
+  
+  if (method == "knn") {
+    stopifnot(nrow(neigh) == ncol(vals_smooth))
+    for (i in seq_len(ncol(vals_smooth))) {
+      setTxtProgressBar(pb, i)
+      # extract values
+      vals_sub <- vals[, neigh[i, ], drop = FALSE]
+      # calculate average
+      vals_smooth[, i] <- rowMeans(vals_sub)
     }
   }
   
