@@ -33,5 +33,6 @@ Suggests:
     scuttle, 
     scran, 
     scater, 
-    ggspavis
+    ggspavis, 
+    testthat
 RoxygenNote: 7.2.3
