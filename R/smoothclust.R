@@ -5,8 +5,7 @@
 #' Spatial clustering algorithm for spatial transcriptomics data based on the
 #' principle of smoothing expression measurements across neighboring spatial
 #' locations. The algorithm can be used to define spatial domains consisting of
-#' a single cell type or a consistent mixture of cell types with smooth spatial
-#' boundaries.
+#' a consistent mixture of cell types with smooth spatial boundaries.
 #' 
 #' 
 #' @param input Input data, assumed to be provided as \code{SpatialExperiment}
@@ -21,7 +20,8 @@
 #'   We recommend using raw counts (\code{counts}) for easier interpretation of
 #'   the averages. Default = \code{counts}.
 #' 
-#' @param method Method used for smoothing. The \code{uniform} method calculates
+#' @param method Method used for smoothing. Options are \code{uniform},
+#'   \code{kernel}, and \code{knn}. The \code{uniform} method calculates
 #'   unweighted averages across spatial locations within a circular window with
 #'   radius \code{bandwidth} at each spatial location, which smooths out spatial
 #'   variability as well as sparsity due to sampling variability. The
@@ -31,39 +31,40 @@
 #'   approach to smoothing out spatial variability but may be affected by
 #'   sparsity due to sampling variability (especially sparsity at the index
 #'   point), and is computationally slower. The \code{knn} method calculates an
-#'   average across the index point and k nearest neighbors. Default =
-#'   \code{uniform}.
+#'   unweighted average across the index point and its k nearest neighbors, and
+#'   is the fastest method. Default = \code{uniform}.
 #' 
 #' @param bandwidth Bandwidth parameter for smoothing, expressed as proportion
-#'   of width or height (whichever is greater) of tissue area. Smoothing is
-#'   performed across neighboring values at each point. For \code{method =
+#'   of width or height (whichever is greater) of tissue area. Only used for
+#'   \code{method = "uniform"} or \code{method = "kernel"}. For \code{method =
 #'   "uniform"}, the bandwidth represents the radius of a circle, and unweighted
-#'   averages are calculated across points within this circle. For \code{method
-#'   = "kernel"}, the averaging is weighted by distances scaled using a
-#'   truncated exponential kernel applied to Euclidean distances. For example, a
-#'   bandwidth of 0.05 will smooth values across neighbors weighted by distances
-#'   scaled using a truncated exponential kernel with length scale equal to 5%
-#'   of the width or height (whichever is greater) of the tissue area. Weights
-#'   for \code{method = "kernel"} are truncated at small values for
-#'   computational efficiency. Default = 0.05.
+#'   averages are calculated across neighboring points within this circle. For
+#'   \code{method = "kernel"}, the averaging is weighted by distances scaled
+#'   using a truncated exponential kernel applied to Euclidean distances. For
+#'   example, a bandwidth of 0.05 will smooth values across neighbors weighted
+#'   by distances scaled using a truncated exponential kernel with length scale
+#'   equal to 5% of the width or height (whichever is greater) of the tissue
+#'   area. Weights for \code{method = "kernel"} are truncated at small values
+#'   for computational efficiency. Default = 0.05.
 #' 
-#' @param k Number of nearest neighbors for \code{method = "knn"}. Only used for
-#'   \code{method == "knn"}. Default = 18 (based on honeycomb pattern for 10x
-#'   Genomics Visium platform).
+#' @param k Number of nearest neighbors parameter for \code{method = "knn"}.
+#'   Only used for \code{method == "knn"}. Unweighted averages are calculated
+#'   across the index point and its k nearest neighbors. Default = 18 (based on
+#'   honeycomb pattern for 10x Genomics Visium platform).
 #' 
 #' @param truncate Truncation threshold parameter if \code{method = "kernel"}.
 #'   Kernel weights below this value are set to zero for computational
 #'   efficiency. Only used for \code{method = "kernel"}. Default = 0.05.
 #' 
-#' @param keep_unsmoothed Whether to keep unsmoothed expression values in a
-#'   separate \code{assay}. If TRUE, these will be stored in an \code{assay}
-#'   named \code{<assay_name>_unsmoothed} (e.g. \code{counts_unsmoothed}).
+#' @param keep_unsmoothed Whether to keep unsmoothed expression values. If TRUE,
+#'   these will be stored in a new \code{assay} named
+#'   \code{<assay_name>_unsmoothed} (e.g. \code{counts_unsmoothed}).
 #' 
 #' 
 #' @return Returns the \code{SpatialExperiment} object with spatially smoothed
-#'   smoothed expression values stored in the \code{assay} named
-#'   \code{assay_name} (e.g. \code{counts}), which can then be used as the input
-#'   for further downstream analyses such as clustering.
+#'   expression values stored in the \code{assay} named \code{assay_name} (e.g.
+#'   \code{counts}), which can then be used as the input for further downstream
+#'   analyses.
 #' 
 #' 
 #' @importFrom SpatialExperiment spatialCoords

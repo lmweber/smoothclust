@@ -16,7 +16,7 @@ vignette: >
 
 # Introduction
 
-`smoothclust` is a spatial clustering algorithm for spatial transcriptomics data. Currently under development.
+`smoothclust` is a spatial clustering algorithm for spatial transcriptomics data based on the principle of smoothing expression measurements across neighboring spatial locations. The algorithm can be used to define spatial domains consisting of a consistent mixture of cell types with smooth spatial boundaries.
 
 
 # Installation
@@ -26,7 +26,7 @@ Install R package from GitHub: `remotes::install_github("lmweber/smoothclust")`
 
 # Input data format
 
-Input in current version is assumed to be a `SpatialExperiment` object.
+Input data is currently assumed to be in `SpatialExperiment` format.
 
 
 # Tutorial
@@ -56,7 +56,7 @@ dim(spe)
 ```
 
 
-Run smoothclust with default parameter settings:
+Run `smoothclust` with default parameter settings:
 
 ```{r, results="hide"}
 # run smoothclust
@@ -109,7 +109,7 @@ colLabels(spe) <- factor(clust)
 ```
 
 
-Plot clustering:
+Plot clusters / spatial domains:
 
 ```{r}
 pal8 <- "libd_layer_colors"
