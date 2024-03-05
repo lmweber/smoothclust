@@ -153,7 +153,12 @@ smoothclust <- function(input, method = c("uniform", "kernel"),
     for (i in seq_len(ncol(vals_smooth))) {
       setTxtProgressBar(pb, i)
       # extract values
-      vals_sub <- vals[, neigh[[i]]]
+      # note: remove any zeros that were included when no neighbors found
+      ix <- neigh[[i]]
+      if (sum(ix != 0) > 0) {
+        ix <- ix[ix != 0]
+      }
+      vals_sub <- vals[, ix, drop = FALSE]
       # calculate average
       vals_smooth[, i] <- rowMeans(vals_sub)
     }
