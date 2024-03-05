@@ -36,13 +36,13 @@
 #' 
 #' # run smoothclust
 #' # using "knn" method for faster runtime in this example
-#' # see vignette for example using default method and downstream analyses
+#' # see vignette for extended example using default method
 #' spe <- smoothclust(spe, method = "knn", k = 6)
 #' 
 #' # calculate logcounts
 #' spe <- logNormCounts(spe)
 #' 
-#' # preprocessing steps for downstream clustering
+#' # preprocessing steps for clustering
 #' # remove mitochondrial genes
 #' is_mito <- grepl("(^MT-)|(^mt-)", rowData(spe)$gene_name)
 #' spe <- spe[!is_mito, ]

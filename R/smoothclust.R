@@ -84,7 +84,7 @@
 #' 
 #' # run smoothclust
 #' # using "knn" method for faster runtime in this example
-#' # see vignette for example using default method and downstream analyses
+#' # see vignette for extended example using default method
 #' spe <- smoothclust(spe, method = "knn", k = 6)
 #' 
 smoothclust <- function(input, method = c("uniform", "kernel", "knn"), 

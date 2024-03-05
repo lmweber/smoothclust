@@ -75,7 +75,7 @@ spe <- logNormCounts(spe)
 Run clustering:
 
 ```{r}
-# preprocessing steps for downstream clustering
+# preprocessing steps for clustering
 
 # remove mitochondrial genes
 is_mito <- grepl("(^MT-)|(^mt-)", rowData(spe)$gene_name)
@@ -94,7 +94,7 @@ dim(spe)
 ```{r}
 # dimensionality reduction
 
-# compute PCA
+# compute PCA on top HVGs
 set.seed(123)
 spe <- runPCA(spe)
 ```
