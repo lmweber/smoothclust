@@ -28,6 +28,43 @@ Function to calculate smoothness of cluster boundaries, defined as average
 number of nearest neighbors per point that are from a different cluster.
 }
 \examples{
-# Example to be shown in vignette.
+library(STexampleData)
+library(scran)
+library(scater)
+
+# load data
+spe <- Visium_humanDLPFC()
+# keep spots over tissue
+spe <- spe[, colData(spe)$in_tissue == 1]
+
+# run smoothclust
+# using "knn" method for faster runtime in this example
+# see vignette for example using default method and downstream analyses
+spe <- smoothclust(spe, method = "knn", k = 6)
+
+# calculate logcounts
+spe <- logNormCounts(spe)
+
+# preprocessing steps for downstream clustering
+# remove mitochondrial genes
+is_mito <- grepl("(^MT-)|(^mt-)", rowData(spe)$gene_name)
+spe <- spe[!is_mito, ]
+# select top highly variable genes (HVGs)
+dec <- modelGeneVar(spe)
+top_hvgs <- getTopHVGs(dec, prop = 0.1)
+spe <- spe[top_hvgs, ]
+
+# dimensionality reduction
+set.seed(123)
+spe <- runPCA(spe)
+
+# run k-means clustering
+set.seed(123)
+k <- 5
+clust <- kmeans(reducedDim(spe, "PCA"), centers = k)$cluster
+colLabels(spe) <- factor(clust)
+
+# calculate smoothness metric
+smoothness_metric(spatialCoords(spe), as.numeric(colData(spe)$label))
 
 }

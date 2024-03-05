@@ -86,7 +86,6 @@ library(STexampleData)
 
 # load data
 spe <- Visium_humanDLPFC()
-
 # keep spots over tissue
 spe <- spe[, colData(spe)$in_tissue == 1]
 
