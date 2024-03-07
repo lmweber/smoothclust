@@ -6,8 +6,10 @@
 \usage{
 smoothclust(
   input,
-  method = c("uniform", "kernel", "knn"),
   assay_name = "counts",
+  input_type = "counts",
+  spatialcoords = NULL,
+  method = c("uniform", "kernel", "knn"),
   bandwidth = 0.05,
   truncate = 0.05,
   k = 18,
@@ -15,9 +17,30 @@ smoothclust(
 )
 }
 \arguments{
-\item{input}{Input data, assumed to be provided as \code{SpatialExperiment}
-object containing spatial coordinates in \code{spatialCoords} slot and
-expression counts in \code{assay} slots.}
+\item{input}{Input data, which can be provided as either a
+\code{SpatialExperiment} object or a numeric matrix. If this is a
+\code{SpatialExperiment} object, it is assumed to contain either raw
+expression counts or logcounts in the \code{assay} slots and spatial
+coordinates in the \code{spatialCoords} slot. If this is a numeric matrix,
+it is assumed to contain either raw expression counts or logcounts, and
+spatial coordinates need to be provided separately with the
+\code{spatialcoords} argument. The type of input values (i.e. either raw
+counts or logcounts) can be specified with either the \code{assay_name}
+argument (for a \code{SpatialExperiment} input) or the \code{values_type}
+argument (for a numeric matrix input).}
+
+\item{assay_name}{For a \code{SpatialExperiment} input object, this argument
+specifies the name of the \code{assay} containing the expression values to
+be smoothed. In most cases, this will be \code{counts}, which contains raw
+expression counts. Alternatively, \code{logcounts} may also be used. Note
+that if \code{logcounts} are used, the smoothed values represent geometric
+averages, which are more difficult to interpret. We recommend using raw
+counts if possible. This argument is only used if the input is a
+\code{SpatialExperiment} object. Default = \code{counts}.}
+
+\item{spatialcoords}{Numeric matrix of spatial coordinates, assumed to
+contain x coordinates in first column and y coordinates in second column.
+This argument is only used if the input is a numeric matrix.}
 
 \item{method}{Method used for smoothing. Options are \code{uniform},
 \code{kernel}, and \code{knn}. The \code{uniform} method calculates
@@ -32,14 +55,6 @@ sparsity due to sampling variability (especially sparsity at the index
 point), and is computationally slower. The \code{knn} method calculates an
 unweighted average across the index point and its k nearest neighbors, and
 is the fastest method. Default = \code{uniform}.}
-
-\item{assay_name}{Name of \code{assay} in input object containing expression
-count values to be smoothed. In most cases, this will be \code{counts},
-containing raw expression counts. Alternatively, \code{logcounts} or any
-other assay may also be used. If \code{logcounts} are used, the smoothed
-values represent geometric averages, which are more difficult to interpret.
-We recommend using raw counts (\code{counts}) for easier interpretation of
-the averages. Default = \code{counts}.}
 
 \item{bandwidth}{Bandwidth parameter for smoothing, expressed as proportion
 of width or height (whichever is greater) of tissue area. Only used for
@@ -61,17 +76,24 @@ efficiency. Only used for \code{method = "kernel"}. Default = 0.05.}
 \item{k}{Number of nearest neighbors parameter for \code{method = "knn"}.
 Only used for \code{method == "knn"}. Unweighted averages are calculated
 across the index point and its k nearest neighbors. Default = 18 (based on
-honeycomb pattern for 10x Genomics Visium platform).}
+two layers in honeycomb pattern for 10x Genomics Visium platform).}
 
-\item{keep_unsmoothed}{Whether to keep unsmoothed expression values. If TRUE,
-these will be stored in a new \code{assay} named
-\code{<assay_name>_unsmoothed} (e.g. \code{counts_unsmoothed}).}
+\item{keep_unsmoothed}{Whether to keep unsmoothed expression values if the
+input is a \code{SpatialExperiment}. If TRUE, these will be stored in a new
+\code{assay} named \code{<assay_name>_unsmoothed} (e.g.
+\code{counts_unsmoothed}). Only used if the input is a
+\code{SpatialExperiment} object.}
+
+\item{values_type}{For a numeric matrix input, this argument specifies the
+type of input values (i.e. either raw counts or logcounts). This argument
+is only used if the input is a numeric matrix. Default = \code{counts}.}
 }
 \value{
-Returns the \code{SpatialExperiment} object with spatially smoothed
-  expression values stored in the \code{assay} named \code{assay_name} (e.g.
-  \code{counts}), which can then be used as the input for further downstream
-  analyses.
+Returns spatially smoothed expression values, which can then be used
+  as the input for further downstream analyses. Results are returned either
+  as a \code{SpatialExperiment} object containing an updated \code{assay}
+  named \code{assay_name} (e.g. \code{counts}), or as a numeric matrix,
+  depending on the input type.
 }
 \description{
 Spatial clustering algorithm for spatial transcriptomics data.

@@ -8,17 +8,34 @@
 #' a consistent mixture of cell types with smooth spatial boundaries.
 #' 
 #' 
-#' @param input Input data, assumed to be provided as \code{SpatialExperiment}
-#'   object containing spatial coordinates in \code{spatialCoords} slot and
-#'   expression counts in \code{assay} slots.
+#' @param input Input data, which can be provided as either a
+#'   \code{SpatialExperiment} object or a numeric matrix. If this is a
+#'   \code{SpatialExperiment} object, it is assumed to contain either raw
+#'   expression counts or logcounts in the \code{assay} slots and spatial
+#'   coordinates in the \code{spatialCoords} slot. If this is a numeric matrix,
+#'   it is assumed to contain either raw expression counts or logcounts, and
+#'   spatial coordinates need to be provided separately with the
+#'   \code{spatialcoords} argument. The type of input values (i.e. either raw
+#'   counts or logcounts) can be specified with either the \code{assay_name}
+#'   argument (for a \code{SpatialExperiment} input) or the \code{values_type}
+#'   argument (for a numeric matrix input).
 #' 
-#' @param assay_name Name of \code{assay} in input object containing expression
-#'   count values to be smoothed. In most cases, this will be \code{counts},
-#'   containing raw expression counts. Alternatively, \code{logcounts} or any
-#'   other assay may also be used. If \code{logcounts} are used, the smoothed
-#'   values represent geometric averages, which are more difficult to interpret.
-#'   We recommend using raw counts (\code{counts}) for easier interpretation of
-#'   the averages. Default = \code{counts}.
+#' @param assay_name For a \code{SpatialExperiment} input object, this argument
+#'   specifies the name of the \code{assay} containing the expression values to
+#'   be smoothed. In most cases, this will be \code{counts}, which contains raw
+#'   expression counts. Alternatively, \code{logcounts} may also be used. Note
+#'   that if \code{logcounts} are used, the smoothed values represent geometric
+#'   averages, which are more difficult to interpret. We recommend using raw
+#'   counts if possible. This argument is only used if the input is a
+#'   \code{SpatialExperiment} object. Default = \code{counts}.
+#' 
+#' @param values_type For a numeric matrix input, this argument specifies the
+#'   type of input values (i.e. either raw counts or logcounts). This argument
+#'   is only used if the input is a numeric matrix. Default = \code{counts}.
+#' 
+#' @param spatialcoords Numeric matrix of spatial coordinates, assumed to
+#'   contain x coordinates in first column and y coordinates in second column.
+#'   This argument is only used if the input is a numeric matrix.
 #' 
 #' @param method Method used for smoothing. Options are \code{uniform},
 #'   \code{kernel}, and \code{knn}. The \code{uniform} method calculates
@@ -50,27 +67,29 @@
 #' @param k Number of nearest neighbors parameter for \code{method = "knn"}.
 #'   Only used for \code{method == "knn"}. Unweighted averages are calculated
 #'   across the index point and its k nearest neighbors. Default = 18 (based on
-#'   honeycomb pattern for 10x Genomics Visium platform).
+#'   two layers in honeycomb pattern for 10x Genomics Visium platform).
 #' 
 #' @param truncate Truncation threshold parameter if \code{method = "kernel"}.
 #'   Kernel weights below this value are set to zero for computational
 #'   efficiency. Only used for \code{method = "kernel"}. Default = 0.05.
 #' 
-#' @param keep_unsmoothed Whether to keep unsmoothed expression values. If TRUE,
-#'   these will be stored in a new \code{assay} named
-#'   \code{<assay_name>_unsmoothed} (e.g. \code{counts_unsmoothed}).
+#' @param keep_unsmoothed Whether to keep unsmoothed expression values if the
+#'   input is a \code{SpatialExperiment}. If TRUE, these will be stored in a new
+#'   \code{assay} named \code{<assay_name>_unsmoothed} (e.g.
+#'   \code{counts_unsmoothed}). Only used if the input is a
+#'   \code{SpatialExperiment} object.
 #' 
 #' 
-#' @return Returns the \code{SpatialExperiment} object with spatially smoothed
-#'   expression values stored in the \code{assay} named \code{assay_name} (e.g.
-#'   \code{counts}), which can then be used as the input for further downstream
-#'   analyses.
-#' 
+#' @return Returns spatially smoothed expression values, which can then be used
+#'   as the input for further downstream analyses. Results are returned either
+#'   as a \code{SpatialExperiment} object containing an updated \code{assay}
+#'   named \code{assay_name} (e.g. \code{counts}), or as a numeric matrix,
+#'   depending on the input type.
 #' 
 #' @importFrom SpatialExperiment spatialCoords
 #' @importFrom SummarizedExperiment assays 'assays<-' assayNames
 #' @importFrom spdep dnearneigh nbdists knearneigh
-#' @importFrom methods is as
+#' @importFrom methods is is.numeric as
 #' @importFrom utils txtProgressBar setTxtProgressBar
 #' 
 #' @export
@@ -88,21 +107,24 @@
 #' # see vignette for extended example using default method
 #' spe <- smoothclust(spe, method = "knn", k = 6)
 #' 
-smoothclust <- function(input, method = c("uniform", "kernel", "knn"), 
-                        assay_name = "counts", 
+smoothclust <- function(input, assay_name = "counts", 
+                        input_type = "counts", spatialcoords = NULL, 
+                        method = c("uniform", "kernel", "knn"), 
                         bandwidth = 0.05, truncate = 0.05, k = 18, 
                         keep_unsmoothed = TRUE) {
   
   method <- match.arg(method, c("uniform", "kernel", "knn"))
   
-  spe <- input
-  
-  stopifnot(is(spe, "SpatialExperiment"))
-  stopifnot(assay_name %in% assayNames(spe))
-  
-  vals <- assays(spe)[[assay_name]]
-  
-  spatialcoords <- spatialCoords(spe)
+  if (is(input, "SpatialExperiment")) {
+    spe <- input
+    stopifnot(assay_name %in% assayNames(spe))
+    vals <- assays(spe)[[assay_name]]
+    spatialcoords <- spatialCoords(spe)
+  } else {
+    stopifnot(is.numeric(input))
+    vals <- input
+    stopifnot(is.numeric(spatialcoords))
+  }
   
   if (method %in% c("uniform", "kernel")) {
     # convert bandwidth to same units as distances
@@ -126,11 +148,11 @@ smoothclust <- function(input, method = c("uniform", "kernel", "knn"),
   
   if (method %in% c("uniform", "kernel")) {
     # put back self within set of neighbors for each point
-    stopifnot(length(neigh) == ncol(spe))
+    stopifnot(length(neigh) == ncol(vals))
     # include index of self point
-    neigh <- mapply(c, as.list(seq_len(ncol(spe))), neigh, SIMPLIFY = FALSE)
+    neigh <- mapply(c, as.list(seq_len(ncol(vals))), neigh, SIMPLIFY = FALSE)
     if (method == "kernel") {
-      stopifnot(length(dists) == ncol(spe))
+      stopifnot(length(dists) == ncol(vals))
       # include distance (zero) to self point
       dists <- mapply(c, 0, dists, SIMPLIFY = FALSE)
     }
@@ -155,14 +177,14 @@ smoothclust <- function(input, method = c("uniform", "kernel", "knn"),
   if (method == "knn") {
     neigh <- knearneigh(spatialcoords, k = k)$nn
     # include index point
-    stopifnot(nrow(neigh) == ncol(spe))
+    stopifnot(nrow(neigh) == ncol(vals))
     neigh <- cbind(seq_len(nrow(neigh)), neigh)
   }
   
   # calculate smoothed values
   # note: using dense matrix to ensure zeros are included in averaging
   vals <- as.matrix(vals)
-  vals_smooth <- matrix(as.numeric(NA), nrow = nrow(spe), ncol = ncol(spe))
+  vals_smooth <- matrix(as.numeric(NA), nrow = nrow(vals), ncol = ncol(vals))
   
   pb <- txtProgressBar(0, ncol(vals_smooth), style = 3)
   
@@ -202,19 +224,23 @@ smoothclust <- function(input, method = c("uniform", "kernel", "knn"),
   
   close(pb)
   
-  stopifnot(nrow(vals_smooth) == nrow(spe))
-  stopifnot(ncol(vals_smooth) == ncol(spe))
-  rownames(vals_smooth) <- rownames(spe)
-  colnames(vals_smooth) <- colnames(spe)
+  stopifnot(nrow(vals_smooth) == nrow(vals))
+  stopifnot(ncol(vals_smooth) == ncol(vals))
+  rownames(vals_smooth) <- rownames(vals)
+  colnames(vals_smooth) <- colnames(vals)
   
-  # keep unsmoothed values
-  if (keep_unsmoothed) {
-    assay_name_unsmoothed <- paste0(assay_name, "_unsmoothed")
-    assays(spe)[[assay_name_unsmoothed]] <- assays(spe)[[assay_name]]
+  # return results (smoothed values)
+  if (is(input, "SpatialExperiment")) {
+    # keep unsmoothed values
+    if (keep_unsmoothed) {
+      assay_name_unsmoothed <- paste0(assay_name, "_unsmoothed")
+      assays(spe)[[assay_name_unsmoothed]] <- assays(spe)[[assay_name]]
+    }
+    assays(spe)[[assay_name]] <- vals_smooth
+    # return SpatialExperiment object
+    spe
+  } else {
+    # return numeric matrix
+    vals_smooth
   }
-  
-  # store smoothed values in object
-  assays(spe)[[assay_name]] <- vals_smooth
-  
-  spe
 }
