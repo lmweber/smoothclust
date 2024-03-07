@@ -26,7 +26,7 @@ Install R package from GitHub: `remotes::install_github("lmweber/smoothclust")`
 
 # Input data format
 
-Input data is currently assumed to be in `SpatialExperiment` format.
+Input data can be provided either as a `SpatialExperiment` object or a numeric matrix containing expression values. See help file (`?smoothclust`) for details. In the example workflow below, we assume the input is in `SpatialExperiment` format.
 
 
 # Tutorial
