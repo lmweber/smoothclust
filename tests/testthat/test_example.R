@@ -2,7 +2,7 @@
 example(smoothclust, echo = FALSE)
 
 
-test_that("exapmle object has correct class", {
+test_that("example object has correct class", {
   expect_s4_class(spe, "SpatialExperiment")
 })
 
@@ -14,7 +14,7 @@ test_that("example object has correct assays", {
   expect_equal(assayNames(spe), c("counts", "counts_unsmoothed"))
 })
 
-test_that("example object has correct first few values", {
+test_that("first few output values in example object are correct", {
   expect_equal(unname(signif(counts(spe)[1:6, 1], 7)), 
                c(0, 0, 0, 0.1428571, 0, 0))
 })
