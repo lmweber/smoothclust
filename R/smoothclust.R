@@ -15,10 +15,7 @@
 #'   coordinates in the \code{spatialCoords} slot. If this is a numeric matrix,
 #'   it is assumed to contain either raw expression counts or logcounts, and
 #'   spatial coordinates need to be provided separately with the
-#'   \code{spatialcoords} argument. The type of input values (i.e. either raw
-#'   counts or logcounts) can be specified with either the \code{assay_name}
-#'   argument (for a \code{SpatialExperiment} input) or the \code{values_type}
-#'   argument (for a numeric matrix input).
+#'   \code{spatialcoords} argument.
 #' 
 #' @param assay_name For a \code{SpatialExperiment} input object, this argument
 #'   specifies the name of the \code{assay} containing the expression values to
@@ -28,10 +25,6 @@
 #'   averages, which are more difficult to interpret. We recommend using raw
 #'   counts if possible. This argument is only used if the input is a
 #'   \code{SpatialExperiment} object. Default = \code{counts}.
-#' 
-#' @param values_type For a numeric matrix input, this argument specifies the
-#'   type of input values (i.e. either raw counts or logcounts). This argument
-#'   is only used if the input is a numeric matrix. Default = \code{counts}.
 #' 
 #' @param spatialcoords Numeric matrix of spatial coordinates, assumed to
 #'   contain x coordinates in first column and y coordinates in second column.
@@ -107,8 +100,7 @@
 #' # see vignette for extended example using default method
 #' spe <- smoothclust(spe, method = "knn", k = 6)
 #' 
-smoothclust <- function(input, assay_name = "counts", 
-                        input_type = "counts", spatialcoords = NULL, 
+smoothclust <- function(input, assay_name = "counts", spatialcoords = NULL, 
                         method = c("uniform", "kernel", "knn"), 
                         bandwidth = 0.05, truncate = 0.05, k = 18, 
                         keep_unsmoothed = TRUE) {
@@ -224,10 +216,10 @@ smoothclust <- function(input, assay_name = "counts",
   
   close(pb)
   
-  stopifnot(nrow(vals_smooth) == nrow(vals))
-  stopifnot(ncol(vals_smooth) == ncol(vals))
-  rownames(vals_smooth) <- rownames(vals)
-  colnames(vals_smooth) <- colnames(vals)
+  stopifnot(nrow(vals_smooth) == nrow(input))
+  stopifnot(ncol(vals_smooth) == ncol(input))
+  rownames(vals_smooth) <- rownames(input)
+  colnames(vals_smooth) <- colnames(input)
   
   # return results (smoothed values)
   if (is(input, "SpatialExperiment")) {

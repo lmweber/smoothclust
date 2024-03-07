@@ -7,7 +7,6 @@
 smoothclust(
   input,
   assay_name = "counts",
-  input_type = "counts",
   spatialcoords = NULL,
   method = c("uniform", "kernel", "knn"),
   bandwidth = 0.05,
@@ -24,10 +23,7 @@ expression counts or logcounts in the \code{assay} slots and spatial
 coordinates in the \code{spatialCoords} slot. If this is a numeric matrix,
 it is assumed to contain either raw expression counts or logcounts, and
 spatial coordinates need to be provided separately with the
-\code{spatialcoords} argument. The type of input values (i.e. either raw
-counts or logcounts) can be specified with either the \code{assay_name}
-argument (for a \code{SpatialExperiment} input) or the \code{values_type}
-argument (for a numeric matrix input).}
+\code{spatialcoords} argument.}
 
 \item{assay_name}{For a \code{SpatialExperiment} input object, this argument
 specifies the name of the \code{assay} containing the expression values to
@@ -83,10 +79,6 @@ input is a \code{SpatialExperiment}. If TRUE, these will be stored in a new
 \code{assay} named \code{<assay_name>_unsmoothed} (e.g.
 \code{counts_unsmoothed}). Only used if the input is a
 \code{SpatialExperiment} object.}
-
-\item{values_type}{For a numeric matrix input, this argument specifies the
-type of input values (i.e. either raw counts or logcounts). This argument
-is only used if the input is a numeric matrix. Default = \code{counts}.}
 }
 \value{
 Returns spatially smoothed expression values, which can then be used
