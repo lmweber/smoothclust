@@ -89,7 +89,7 @@
 #' @importFrom SpatialExperiment spatialCoords
 #' @importFrom SummarizedExperiment assays 'assays<-' assayNames
 #' @importFrom spdep dnearneigh nbdists knearneigh
-#' @importFrom methods is is.numeric as
+#' @importFrom methods is as
 #' @importFrom utils txtProgressBar setTxtProgressBar
 #' 
 #' @export
