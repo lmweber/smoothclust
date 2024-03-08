@@ -7,7 +7,7 @@
 smoothclust(
   input,
   assay_name = "counts",
-  spatialcoords = NULL,
+  spatial_coords = NULL,
   method = c("uniform", "kernel", "knn"),
   bandwidth = 0.05,
   truncate = 0.05,
@@ -23,7 +23,7 @@ expression counts or logcounts in the \code{assay} slots and spatial
 coordinates in the \code{spatialCoords} slot. If this is a numeric matrix,
 it is assumed to contain either raw expression counts or logcounts, and
 spatial coordinates need to be provided separately with the
-\code{spatialcoords} argument.}
+\code{spatial_coords} argument.}
 
 \item{assay_name}{For a \code{SpatialExperiment} input object, this argument
 specifies the name of the \code{assay} containing the expression values to
@@ -34,7 +34,7 @@ averages, which are more difficult to interpret. We recommend using raw
 counts if possible. This argument is only used if the input is a
 \code{SpatialExperiment} object. Default = \code{counts}.}
 
-\item{spatialcoords}{Numeric matrix of spatial coordinates, assumed to
+\item{spatial_coords}{Numeric matrix of spatial coordinates, assumed to
 contain x coordinates in first column and y coordinates in second column.
 This argument is only used if the input is a numeric matrix.}
 

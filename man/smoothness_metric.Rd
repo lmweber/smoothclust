@@ -4,12 +4,12 @@
 \alias{smoothness_metric}
 \title{Function for smoothness metric}
 \usage{
-smoothness_metric(spatialcoords, labels, k = 6)
+smoothness_metric(spatial_coords, labels, k = 6)
 }
 \arguments{
-\item{spatialcoords}{Numeric matrix containing spatial coordinates of points,
-formatted as nrow = number of points, ncol = 2 (assuming x and y
-dimensions). For example, `spatialcoords = spatialCoords(spe)` if using a
+\item{spatial_coords}{Numeric matrix containing spatial coordinates of
+points, formatted as nrow = number of points, ncol = 2 (assuming x and y
+dimensions). For example, `spatial_coords = spatialCoords(spe)` if using a
 \code{SpatialExperiment} object.}
 
 \item{labels}{Numeric vector of cluster labels for each point. For example,

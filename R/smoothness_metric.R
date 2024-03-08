@@ -8,9 +8,9 @@
 #' smoothness of cluster boundaries.
 #' 
 #' 
-#' @param spatialcoords Numeric matrix containing spatial coordinates of points,
-#'   formatted as nrow = number of points, ncol = 2 (assuming x and y
-#'   dimensions). For example, `spatialcoords = spatialCoords(spe)` if using a
+#' @param spatial_coords Numeric matrix containing spatial coordinates of
+#'   points, formatted as nrow = number of points, ncol = 2 (assuming x and y
+#'   dimensions). For example, `spatial_coords = spatialCoords(spe)` if using a
 #'   \code{SpatialExperiment} object.
 #' 
 #' @param labels Numeric vector of cluster labels for each point. For example,
@@ -75,13 +75,13 @@
 #' head(res$n_discordant)
 #' res$mean_discordant
 #' 
-smoothness_metric <- function(spatialcoords, labels, k = 6) {
+smoothness_metric <- function(spatial_coords, labels, k = 6) {
   
-  stopifnot(length(labels) == nrow(spatialcoords))
-  stopifnot(ncol(spatialcoords) == 2)
+  stopifnot(length(labels) == nrow(spatial_coords))
+  stopifnot(ncol(spatial_coords) == 2)
   
   # calculate k nearest neighbors for each point
-  neigh <- knearneigh(spatialcoords, k = k)$nn
+  neigh <- knearneigh(spatial_coords, k = k)$nn
   
   # calculate ordered columns of cluster labels
   neigh_labels <- matrix(NA, nrow = nrow(neigh), ncol = ncol(neigh))

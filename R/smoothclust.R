@@ -15,7 +15,7 @@
 #'   coordinates in the \code{spatialCoords} slot. If this is a numeric matrix,
 #'   it is assumed to contain either raw expression counts or logcounts, and
 #'   spatial coordinates need to be provided separately with the
-#'   \code{spatialcoords} argument.
+#'   \code{spatial_coords} argument.
 #' 
 #' @param assay_name For a \code{SpatialExperiment} input object, this argument
 #'   specifies the name of the \code{assay} containing the expression values to
@@ -26,7 +26,7 @@
 #'   counts if possible. This argument is only used if the input is a
 #'   \code{SpatialExperiment} object. Default = \code{counts}.
 #' 
-#' @param spatialcoords Numeric matrix of spatial coordinates, assumed to
+#' @param spatial_coords Numeric matrix of spatial coordinates, assumed to
 #'   contain x coordinates in first column and y coordinates in second column.
 #'   This argument is only used if the input is a numeric matrix.
 #' 
@@ -100,7 +100,7 @@
 #' # see vignette for extended example using default method
 #' spe <- smoothclust(spe, method = "knn", k = 6)
 #' 
-smoothclust <- function(input, assay_name = "counts", spatialcoords = NULL, 
+smoothclust <- function(input, assay_name = "counts", spatial_coords = NULL, 
                         method = c("uniform", "kernel", "knn"), 
                         bandwidth = 0.05, truncate = 0.05, k = 18, 
                         keep_unsmoothed = TRUE) {
@@ -111,31 +111,31 @@ smoothclust <- function(input, assay_name = "counts", spatialcoords = NULL,
     spe <- input
     stopifnot(assay_name %in% assayNames(spe))
     vals <- assays(spe)[[assay_name]]
-    spatialcoords <- spatialCoords(spe)
+    spatial_coords <- spatialCoords(spe)
   } else {
     stopifnot(is.numeric(input))
     vals <- input
-    stopifnot(is.numeric(spatialcoords))
+    stopifnot(is.numeric(spatial_coords))
   }
   
   if (method %in% c("uniform", "kernel")) {
     # convert bandwidth to same units as distances
-    range_x <- abs(diff(range(spatialcoords[, 1])))
-    range_y <- abs(diff(range(spatialcoords[, 2])))
+    range_x <- abs(diff(range(spatial_coords[, 1])))
+    range_y <- abs(diff(range(spatial_coords[, 2])))
     range_max <- max(range_x, range_y)
     bandwidth_scaled <- bandwidth * range_max
   }
   
   if (method == "uniform") {
     # calculate neighbors (note self is excluded)
-    neigh <- dnearneigh(spatialcoords, d1 = 0, d2 = bandwidth_scaled)
+    neigh <- dnearneigh(spatial_coords, d1 = 0, d2 = bandwidth_scaled)
   }
   
   if (method == "kernel") {
     # calculate neighbors (note self is excluded)
-    neigh <- dnearneigh(spatialcoords, d1 = 0, d2 = Inf)
+    neigh <- dnearneigh(spatial_coords, d1 = 0, d2 = Inf)
     # calculate distances
-    dists <- nbdists(neigh, coords = spatialcoords)
+    dists <- nbdists(neigh, coords = spatial_coords)
   }
   
   if (method %in% c("uniform", "kernel")) {
@@ -167,7 +167,7 @@ smoothclust <- function(input, assay_name = "counts", spatialcoords = NULL,
   }
   
   if (method == "knn") {
-    neigh <- knearneigh(spatialcoords, k = k)$nn
+    neigh <- knearneigh(spatial_coords, k = k)$nn
     # include index point
     stopifnot(nrow(neigh) == ncol(vals))
     neigh <- cbind(seq_len(nrow(neigh)), neigh)
