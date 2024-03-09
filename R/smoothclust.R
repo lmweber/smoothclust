@@ -81,6 +81,7 @@
 #' 
 #' @importFrom SpatialExperiment spatialCoords
 #' @importFrom SummarizedExperiment assays 'assays<-' assayNames
+#' @importFrom sparseMatrixStats rowMeans2
 #' @importFrom spdep dnearneigh nbdists knearneigh
 #' @importFrom methods is as
 #' @importFrom utils txtProgressBar setTxtProgressBar
@@ -174,23 +175,27 @@ smoothclust <- function(input, assay_name = "counts", spatial_coords = NULL,
   }
   
   # calculate smoothed values
-  # note: using dense matrix to ensure zeros are included in averaging
-  vals <- as.matrix(vals)
+  # note: using sparse or dense matrices depending on method
+  
   vals_smooth <- matrix(as.numeric(NA), nrow = nrow(vals), ncol = ncol(vals))
   
   pb <- txtProgressBar(0, ncol(vals_smooth), style = 3)
   
   if (method == "uniform") {
+    # sparse matrix class for sparseMatrixStats
+    vals <- as(vals, "CsparseMatrix")
+    stopifnot(all(dim(vals) == dim(vals_smooth)))
     for (i in seq_len(ncol(vals_smooth))) {
       setTxtProgressBar(pb, i)
-      # extract values
-      vals_sub <- vals[, neigh[[i]], drop = FALSE]
-      # calculate average
-      vals_smooth[, i] <- rowMeans(vals_sub)
+      # calculate average over subset of neighbors
+      vals_smooth[, i] <- sparseMatrixStats::rowMeans2(vals, cols = neigh[[i]])
     }
   }
   
   if (method == "kernel") {
+    # dense matrix
+    vals <- as.matrix(vals)
+    stopifnot(all(dim(vals) == dim(vals_smooth)))
     for (i in seq_len(ncol(vals_smooth))) {
       setTxtProgressBar(pb, i)
       # extract values and weights
@@ -204,15 +209,42 @@ smoothclust <- function(input, assay_name = "counts", spatial_coords = NULL,
   }
   
   if (method == "knn") {
+    # sparse matrix class for sparseMatrixStats
+    vals <- as(vals, "CsparseMatrix")
+    stopifnot(all(dim(vals) == dim(vals_smooth)))
     stopifnot(nrow(neigh) == ncol(vals_smooth))
     for (i in seq_len(ncol(vals_smooth))) {
       setTxtProgressBar(pb, i)
-      # extract values
-      vals_sub <- vals[, neigh[i, ], drop = FALSE]
-      # calculate average
-      vals_smooth[, i] <- rowMeans(vals_sub)
+      # calculate average over subset of neighbors
+      vals_smooth[, i] <- sparseMatrixStats::rowMeans2(vals, cols = neigh[i, ])
     }
   }
+  
+  # # versions using dense matrices for debugging
+  # 
+  # vals <- as.matrix(vals)
+  # vals_smooth <- matrix(as.numeric(NA), nrow = nrow(vals), ncol = ncol(vals))
+  # 
+  # if (method == "uniform") {
+  #   for (i in seq_len(ncol(vals_smooth))) {
+  #     setTxtProgressBar(pb, i)
+  #     # extract values
+  #     vals_sub <- vals[, neigh[[i]], drop = FALSE]
+  #     # calculate average
+  #     vals_smooth[, i] <- rowMeans(vals_sub)
+  #   }
+  # }
+  # 
+  # if (method == "knn") {
+  #   stopifnot(nrow(neigh) == ncol(vals_smooth))
+  #   for (i in seq_len(ncol(vals_smooth))) {
+  #     setTxtProgressBar(pb, i)
+  #     # extract values
+  #     vals_sub <- vals[, neigh[i, ], drop = FALSE]
+  #     # calculate average
+  #     vals_smooth[, i] <- rowMeans(vals_sub)
+  #   }
+  # }
   
   close(pb)
   

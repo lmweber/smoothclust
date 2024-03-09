@@ -22,6 +22,7 @@ biocViews:
 Imports: 
     SpatialExperiment, 
     SummarizedExperiment, 
+    sparseMatrixStats, 
     spdep, 
     methods, 
     utils
