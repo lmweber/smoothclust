@@ -160,14 +160,27 @@ smoothclust <- function(input, assay_name = "counts", spatial_coords = NULL,
     # truncate kernel weights below threshold
     keep <- lapply(weights, function(w) {w >= truncate})
     
+    stopifnot(length(weights) == length(neigh))
     stopifnot(length(weights) == length(keep))
-    stopifnot(length(neigh) == length(keep))
+    stopifnot(all(sapply(weights, length) == length(weights)))
+    stopifnot(all(sapply(keep, length) == length(weights)))
     
-    weights <- mapply(function(w, k) {w[k]}, weights, keep)
-    neigh <- mapply(function(n, k) {n[k]}, neigh, keep)
+    weights <- mapply(function(w, k) {
+      w_trunc <- rep(0, length(w))
+      w_trunc[k] <- w[k]
+      w_trunc
+    }, weights, keep, SIMPLIFY = FALSE)
     
     # normalize weights
-    weights <- lapply(weights, function(w) {w / sum(w)} )
+    weights <- lapply(weights, function(w) {
+      if (sum(w) > 0) {
+        w / sum(w)
+      } else {
+        0
+      }
+    })
+    
+    neigh <- mapply(function(n, k) {n[k]}, neigh, keep)
   }
   
   if (method == "knn") {
