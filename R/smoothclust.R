@@ -171,15 +171,6 @@ smoothclust <- function(input, assay_name = "counts", spatial_coords = NULL,
       w_trunc
     }, weights, keep, SIMPLIFY = FALSE)
     
-    # normalize weights
-    weights <- lapply(weights, function(w) {
-      if (sum(w) > 0) {
-        w / sum(w)
-      } else {
-        0
-      }
-    })
-    
     neigh <- mapply(function(n, k) {n[k]}, neigh, keep)
   }
   
