@@ -81,7 +81,7 @@
 #' 
 #' @importFrom SpatialExperiment spatialCoords
 #' @importFrom SummarizedExperiment assays 'assays<-' assayNames
-#' @importFrom sparseMatrixStats rowMeans2
+#' @importFrom sparseMatrixStats rowMeans2 rowWeightedMeans
 #' @importFrom spdep dnearneigh nbdists knearneigh
 #' @importFrom methods is as
 #' @importFrom utils txtProgressBar setTxtProgressBar
@@ -165,6 +165,9 @@ smoothclust <- function(input, assay_name = "counts", spatial_coords = NULL,
     
     weights <- mapply(function(w, k) {w[k]}, weights, keep)
     neigh <- mapply(function(n, k) {n[k]}, neigh, keep)
+    
+    # normalize weights
+    weights <- lapply(weights, function(w) {w / sum(w)} )
   }
   
   if (method == "knn") {
@@ -175,16 +178,17 @@ smoothclust <- function(input, assay_name = "counts", spatial_coords = NULL,
   }
   
   # calculate smoothed values
-  # note: using sparse or dense matrices depending on method
+  # note: using sparse matrices
   
   vals_smooth <- matrix(as.numeric(NA), nrow = nrow(vals), ncol = ncol(vals))
+  
+  # sparse matrix class for sparseMatrixStats
+  vals <- as(vals, "CsparseMatrix")
+  stopifnot(all(dim(vals) == dim(vals_smooth)))
   
   pb <- txtProgressBar(0, ncol(vals_smooth), style = 3)
   
   if (method == "uniform") {
-    # sparse matrix class for sparseMatrixStats
-    vals <- as(vals, "CsparseMatrix")
-    stopifnot(all(dim(vals) == dim(vals_smooth)))
     for (i in seq_len(ncol(vals_smooth))) {
       setTxtProgressBar(pb, i)
       # calculate average over subset of neighbors
@@ -193,25 +197,14 @@ smoothclust <- function(input, assay_name = "counts", spatial_coords = NULL,
   }
   
   if (method == "kernel") {
-    # dense matrix
-    vals <- as.matrix(vals)
-    stopifnot(all(dim(vals) == dim(vals_smooth)))
     for (i in seq_len(ncol(vals_smooth))) {
       setTxtProgressBar(pb, i)
-      # extract values and weights
-      vals_sub <- vals[, neigh[[i]]]
-      weights_rep <- t(replicate(nrow(vals_sub), weights[[i]]))
-      stopifnot(all(dim(vals_sub) == dim(weights_rep)))
-      # calculate weighted average
-      out <- rowSums(vals_sub * weights_rep) / sum(weights[[i]])
-      vals_smooth[, i] <- out
+      # calculate weighted average over subset of neighbors
+      vals_smooth[, i] <- sparseMatrixStats::rowWeightedMeans(vals, w = weights[[i]], cols = neigh[[i]])
     }
   }
   
   if (method == "knn") {
-    # sparse matrix class for sparseMatrixStats
-    vals <- as(vals, "CsparseMatrix")
-    stopifnot(all(dim(vals) == dim(vals_smooth)))
     stopifnot(nrow(neigh) == ncol(vals_smooth))
     for (i in seq_len(ncol(vals_smooth))) {
       setTxtProgressBar(pb, i)
@@ -232,6 +225,19 @@ smoothclust <- function(input, assay_name = "counts", spatial_coords = NULL,
   #     vals_sub <- vals[, neigh[[i]], drop = FALSE]
   #     # calculate average
   #     vals_smooth[, i] <- rowMeans(vals_sub)
+  #   }
+  # }
+  # 
+  # if (method == "kernel") {
+  #   for (i in seq_len(ncol(vals_smooth))) {
+  #     setTxtProgressBar(pb, i)
+  #     # extract values and weights
+  #     vals_sub <- vals[, neigh[[i]]]
+  #     weights_rep <- t(replicate(nrow(vals_sub), weights[[i]]))
+  #     stopifnot(all(dim(vals_sub) == dim(weights_rep)))
+  #     # calculate weighted average
+  #     out <- rowSums(vals_sub * weights_rep) / sum(weights[[i]])
+  #     vals_smooth[, i] <- out
   #   }
   # }
   # 
