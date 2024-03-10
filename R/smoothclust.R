@@ -196,7 +196,7 @@ smoothclust <- function(input, assay_name = "counts", spatial_coords = NULL,
     for (i in seq_len(ncol(vals_smooth))) {
       setTxtProgressBar(pb, i)
       # calculate average over subset of neighbors
-      vals_smooth[, i] <- sparseMatrixStats::rowMeans2(vals, cols = neigh[[i]])
+      vals_smooth[, i] <- rowMeans2(vals, cols = neigh[[i]])
     }
   }
   
@@ -204,7 +204,7 @@ smoothclust <- function(input, assay_name = "counts", spatial_coords = NULL,
     for (i in seq_len(ncol(vals_smooth))) {
       setTxtProgressBar(pb, i)
       # calculate weighted average over subset of neighbors
-      vals_smooth[, i] <- sparseMatrixStats::rowWeightedMeans(vals, w = weights[[i]], cols = neigh[[i]])
+      vals_smooth[, i] <- rowWeightedMeans(vals, w = weights[[i]], cols = neigh[[i]])
     }
   }
   
@@ -213,7 +213,7 @@ smoothclust <- function(input, assay_name = "counts", spatial_coords = NULL,
     for (i in seq_len(ncol(vals_smooth))) {
       setTxtProgressBar(pb, i)
       # calculate average over subset of neighbors
-      vals_smooth[, i] <- sparseMatrixStats::rowMeans2(vals, cols = neigh[i, ])
+      vals_smooth[, i] <- rowMeans2(vals, cols = neigh[i, ])
     }
   }
   
