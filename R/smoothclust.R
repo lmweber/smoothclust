@@ -1,11 +1,16 @@
 #' smoothclust
 #' 
-#' Spatial clustering algorithm for spatial transcriptomics data.
+#' Method for segmentation of spatial domains and spatially-aware clustering.
 #' 
-#' Spatial clustering algorithm for spatial transcriptomics data based on the
-#' principle of smoothing expression measurements across neighboring spatial
-#' locations. The algorithm can be used to define spatial domains consisting of
-#' a consistent mixture of cell types with smooth spatial boundaries.
+#' Method for segmentation of spatial domains and spatially-aware clustering in
+#' spatial transcriptomics data.
+#' 
+#' Method for segmentation of spatial domains and spatially-aware clustering in
+#' spatial transcriptomics data. The method generates spatial domains consisting
+#' of consistent mixtures of cell types with smooth boundaries, by smoothing
+#' gene expression profiles across neighboring spatial locations followed by
+#' unsupervised clustering. Spatial domains may then be further investigated
+#' using cell type compositional analyses and differential analyses.
 #' 
 #' 
 #' @param input Input data, which can be provided as either a

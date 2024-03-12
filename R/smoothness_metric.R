@@ -5,7 +5,7 @@
 #' Function to calculate clustering smoothness evaluation metric, defined as the
 #' average number of nearest neighbors per point that are from a different
 #' cluster. This metric can be used to quantify and compare the relative
-#' smoothness of cluster boundaries.
+#' smoothness of the boundaries of clusters or spatial domains.
 #' 
 #' 
 #' @param spatial_coords Numeric matrix containing spatial coordinates of
