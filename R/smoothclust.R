@@ -222,45 +222,6 @@ smoothclust <- function(input, assay_name = "counts", spatial_coords = NULL,
     }
   }
   
-  # # versions using dense matrices for debugging
-  # 
-  # vals <- as.matrix(vals)
-  # vals_smooth <- matrix(as.numeric(NA), nrow = nrow(vals), ncol = ncol(vals))
-  # 
-  # if (method == "uniform") {
-  #   for (i in seq_len(ncol(vals_smooth))) {
-  #     setTxtProgressBar(pb, i)
-  #     # extract values
-  #     vals_sub <- vals[, neigh[[i]], drop = FALSE]
-  #     # calculate average
-  #     vals_smooth[, i] <- rowMeans(vals_sub)
-  #   }
-  # }
-  # 
-  # if (method == "kernel") {
-  #   for (i in seq_len(ncol(vals_smooth))) {
-  #     setTxtProgressBar(pb, i)
-  #     # extract values and weights
-  #     vals_sub <- vals[, neigh[[i]]]
-  #     weights_rep <- t(replicate(nrow(vals_sub), weights[[i]]))
-  #     stopifnot(all(dim(vals_sub) == dim(weights_rep)))
-  #     # calculate weighted average
-  #     out <- rowSums(vals_sub * weights_rep) / sum(weights[[i]])
-  #     vals_smooth[, i] <- out
-  #   }
-  # }
-  # 
-  # if (method == "knn") {
-  #   stopifnot(nrow(neigh) == ncol(vals_smooth))
-  #   for (i in seq_len(ncol(vals_smooth))) {
-  #     setTxtProgressBar(pb, i)
-  #     # extract values
-  #     vals_sub <- vals[, neigh[i, ], drop = FALSE]
-  #     # calculate average
-  #     vals_smooth[, i] <- rowMeans(vals_sub)
-  #   }
-  # }
-  
   close(pb)
   
   stopifnot(nrow(vals_smooth) == nrow(input))
