@@ -18,7 +18,8 @@ biocViews:
     Spatial, 
     SingleCell, 
     Transcriptomics, 
-    GeneExpression
+    GeneExpression, 
+    Clustering
 Imports: 
     SpatialExperiment, 
     SummarizedExperiment, 
