@@ -95,11 +95,12 @@ Method for segmentation of spatial domains and spatially-aware clustering in
 spatial transcriptomics data.
 
 Method for segmentation of spatial domains and spatially-aware clustering in
-spatial transcriptomics data. The method generates spatial domains consisting
-of consistent mixtures of cell types with smooth boundaries, by smoothing
-gene expression profiles across neighboring spatial locations followed by
-unsupervised clustering. Spatial domains may then be further investigated
-using cell type compositional analyses and differential analyses.
+spatial transcriptomics data. The method generates spatial domains with
+smooth boundaries by smoothing gene expression profiles across neighboring
+spatial locations, followed by unsupervised clustering. Spatial domains
+consisting of consistent mixtures of cell types may then be further
+investigated by applying cell type compositional analyses or differential
+analyses.
 }
 \examples{
 library(STexampleData)
