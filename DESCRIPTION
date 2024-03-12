@@ -1,5 +1,5 @@
 Package: smoothclust
-Version: 0.0.1
+Version: 0.99.0
 Title: smoothclust
 Description: Method for segmentation of spatial domains and spatially-aware 
     clustering in spatial transcriptomics data. The method generates spatial 
