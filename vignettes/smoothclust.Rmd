@@ -136,7 +136,7 @@ pal8 <- "libd_layer_colors"
 pal36 <- unname(palette.colors(36, "Polychrome 36"))
 
 # plot clusters / spatial domains
-plotSpots(spe, annotate = "label", palette = pal8)
+plotSpots(spe, annotate = "label", pal = pal8)
 ```
 
 
@@ -144,7 +144,7 @@ Plot manually annotated reference labels, which can be used to evaluate the perf
 
 ```{r}
 # plot reference labels
-plotSpots(spe, annotate = "ground_truth", palette = pal8)
+plotSpots(spe, annotate = "ground_truth", pal = pal8)
 ```
 
 
