@@ -23,6 +23,8 @@ biocViews:
     Transcriptomics, 
     GeneExpression, 
     Clustering
+Depends: 
+    R (>= 4.4.0)
 Imports: 
     SpatialExperiment, 
     SummarizedExperiment, 
