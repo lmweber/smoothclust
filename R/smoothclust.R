@@ -147,6 +147,7 @@ smoothclust <- function(input, assay_name = "counts", spatial_coords = NULL,
   
   if (method %in% c("uniform", "kernel")) {
     # put back self within set of neighbors for each point
+    # note: self point is first element in vector
     stopifnot(length(neigh) == ncol(vals))
     # include index of self point
     neigh <- mapply(c, as.list(seq_len(ncol(vals))), neigh, SIMPLIFY = FALSE)
@@ -171,13 +172,17 @@ smoothclust <- function(input, assay_name = "counts", spatial_coords = NULL,
     stopifnot(all(sapply(weights, length) == length(weights)))
     stopifnot(all(sapply(keep, length) == length(weights)))
     
+    # truncate weights and neighbors
+    # weights <- mapply(function(w, k) {w[k]}, weights, keep)
+    # neigh <- mapply(function(n, k) {n[k]}, neigh, keep)
+    
+    # truncate weights and fill with zeros
+    # note rowWeightedMeans() requires full-length weights vectors
     weights <- mapply(function(w, k) {
       w_trunc <- rep(0, length(w))
       w_trunc[k] <- w[k]
       w_trunc
     }, weights, keep, SIMPLIFY = FALSE)
-    
-    neigh <- mapply(function(n, k) {n[k]}, neigh, keep)
   }
   
   if (method == "knn") {
@@ -210,7 +215,7 @@ smoothclust <- function(input, assay_name = "counts", spatial_coords = NULL,
     for (i in seq_len(ncol(vals_smooth))) {
       setTxtProgressBar(pb, i)
       # calculate weighted average over subset of neighbors
-      vals_smooth[, i] <- rowWeightedMeans(vals, w = weights[[i]], cols = neigh[[i]])
+      vals_smooth[, i] <- rowWeightedMeans(vals, w = weights[[i]])
     }
   }
   
