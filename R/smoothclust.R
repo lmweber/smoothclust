@@ -72,18 +72,13 @@
 #'   Kernel weights below this value are set to zero for computational
 #'   efficiency. Only used for \code{method = "kernel"}. Default = 0.05.
 #' 
-#' @param keep_unsmoothed Whether to keep unsmoothed expression values if the
-#'   input is a \code{SpatialExperiment}. If TRUE, these will be stored in a new
-#'   \code{assay} named \code{<assay_name>_unsmoothed} (e.g.
-#'   \code{counts_unsmoothed}). Only used if the input is a
-#'   \code{SpatialExperiment} object.
-#' 
 #' 
 #' @return Returns spatially smoothed expression values, which can then be used
 #'   as the input for further downstream analyses. Results are returned either
-#'   as a \code{SpatialExperiment} object containing an updated \code{assay}
-#'   named \code{assay_name} (e.g. \code{counts}), or as a numeric matrix,
-#'   depending on the input type.
+#'   as a \code{SpatialExperiment} object containing a new \code{assay} named
+#'   \code{<assay_name>_smooth} (e.g. \code{counts_smooth} or
+#'   \code{logcounts_smooth}), or as a numeric matrix, depending on the input
+#'   type.
 #' 
 #' @importFrom SpatialExperiment spatialCoords
 #' @importFrom SummarizedExperiment assays 'assays<-' assayNames
@@ -104,13 +99,14 @@
 #' 
 #' # run smoothclust
 #' # using "knn" method for faster runtime in this example
-#' # see vignette for extended example using default method
 #' spe <- smoothclust(spe, method = "knn", k = 6)
+#' 
+#' # see vignette for extended example using default method and including
+#' # downstream analysis steps
 #' 
 smoothclust <- function(input, assay_name = "counts", spatial_coords = NULL, 
                         method = c("uniform", "kernel", "knn"), 
-                        bandwidth = 0.05, truncate = 0.05, k = 18, 
-                        keep_unsmoothed = TRUE) {
+                        bandwidth = 0.05, truncate = 0.05, k = 18) {
   
   method <- match.arg(method, c("uniform", "kernel", "knn"))
   
@@ -243,16 +239,10 @@ smoothclust <- function(input, assay_name = "counts", spatial_coords = NULL,
   
   # return results (smoothed values)
   if (is(input, "SpatialExperiment")) {
-    # keep unsmoothed values
-    if (keep_unsmoothed) {
-      assay_name_unsmoothed <- paste0(assay_name, "_unsmoothed")
-      assays(spe)[[assay_name_unsmoothed]] <- assays(spe)[[assay_name]]
-    }
-    assays(spe)[[assay_name]] <- vals_smooth
-    # return SpatialExperiment object
+    assay_name_smooth <- paste0(assay_name, "_smooth")
+    assays(spe)[[assay_name_smooth]] <- vals_smooth
     spe
   } else {
-    # return numeric matrix
     vals_smooth
   }
 }
