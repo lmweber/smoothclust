@@ -168,21 +168,27 @@ smoothclust <- function(input, assay_name = "counts", spatial_coords = NULL,
     keep <- lapply(weights, function(w) {w >= truncate})
     
     stopifnot(length(weights) == length(neigh))
+    stopifnot(length(weights) == length(dists))
     stopifnot(length(weights) == length(keep))
     stopifnot(all(sapply(weights, length) == length(weights)))
-    stopifnot(all(sapply(keep, length) == length(weights)))
+    stopifnot(all(sapply(keep, length) == length(keep)))
     
     # truncate weights and neighbors
     # weights <- mapply(function(w, k) {w[k]}, weights, keep)
     # neigh <- mapply(function(n, k) {n[k]}, neigh, keep)
     
-    # truncate weights and fill with zeros
-    # note rowWeightedMeans() requires full-length weights vectors
+    # truncate weights and fill vector with zeros
+    # note rowWeightedMeans() requires full-length weights vectors so cannot subset
     weights <- mapply(function(w, k) {
       w_trunc <- rep(0, length(w))
       w_trunc[k] <- w[k]
       w_trunc
     }, weights, keep, SIMPLIFY = FALSE)
+    
+    # order weights to match original order of points
+    weights <- mapply(function(w, n) {
+      w[order(n)]
+    }, weights, neigh, SIMPLIFY = FALSE)
   }
   
   if (method == "knn") {
