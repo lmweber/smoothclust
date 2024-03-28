@@ -42,11 +42,11 @@
 #' 
 #' # run smoothclust
 #' # using "knn" method for faster runtime in this example
-#' # see vignette for extended example using default method
+#' # see vignette for example using default method
 #' spe <- smoothclust(spe, method = "knn", k = 6)
 #' 
 #' # calculate logcounts
-#' spe <- logNormCounts(spe)
+#' spe <- logNormCounts(spe, assay.type = "counts_smooth")
 #' 
 #' # preprocessing steps for clustering
 #' # remove mitochondrial genes
@@ -64,8 +64,8 @@
 #' # run k-means clustering
 #' set.seed(123)
 #' k <- 5
-#' clust <- kmeans(reducedDim(spe, "PCA"), centers = k)$cluster
-#' colLabels(spe) <- factor(clust)
+#' clus <- kmeans(reducedDim(spe, "PCA"), centers = k)$cluster
+#' colLabels(spe) <- factor(clus)
 #' 
 #' # calculate smoothness metric
 #' res <- smoothness_metric(spatialCoords(spe), as.numeric(colData(spe)$label))

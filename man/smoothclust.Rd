@@ -11,8 +11,7 @@ smoothclust(
   method = c("uniform", "kernel", "knn"),
   bandwidth = 0.05,
   truncate = 0.05,
-  k = 18,
-  keep_unsmoothed = TRUE
+  k = 18
 )
 }
 \arguments{
@@ -73,19 +72,14 @@ efficiency. Only used for \code{method = "kernel"}. Default = 0.05.}
 Only used for \code{method == "knn"}. Unweighted averages are calculated
 across the index point and its k nearest neighbors. Default = 18 (based on
 two layers in honeycomb pattern for 10x Genomics Visium platform).}
-
-\item{keep_unsmoothed}{Whether to keep unsmoothed expression values if the
-input is a \code{SpatialExperiment}. If TRUE, these will be stored in a new
-\code{assay} named \code{<assay_name>_unsmoothed} (e.g.
-\code{counts_unsmoothed}). Only used if the input is a
-\code{SpatialExperiment} object.}
 }
 \value{
 Returns spatially smoothed expression values, which can then be used
   as the input for further downstream analyses. Results are returned either
-  as a \code{SpatialExperiment} object containing an updated \code{assay}
-  named \code{assay_name} (e.g. \code{counts}), or as a numeric matrix,
-  depending on the input type.
+  as a \code{SpatialExperiment} object containing a new \code{assay} named
+  \code{<assay_name>_smooth} (e.g. \code{counts_smooth} or
+  \code{logcounts_smooth}), or as a numeric matrix, depending on the input
+  type.
 }
 \description{
 Method for segmentation of spatial domains and spatially-aware clustering.
@@ -112,7 +106,9 @@ spe <- spe[, colData(spe)$in_tissue == 1]
 
 # run smoothclust
 # using "knn" method for faster runtime in this example
-# see vignette for extended example using default method
 spe <- smoothclust(spe, method = "knn", k = 6)
+
+# see vignette for extended example using default method and including
+# downstream analysis steps
 
 }

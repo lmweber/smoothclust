@@ -71,7 +71,7 @@ spe <- smoothclust(spe)
 ```
 
 
-The smoothed expression values are stored as updated values in the `counts` assay. The original expression count values are also retained in the object (e.g. in case they are needed later for plotting) and stored in a new assay named `counts_unsmoothed`.
+The smoothed expression counts are stored in a new assay named `counts_smooth`:
 
 ```{r}
 # check output object
@@ -79,11 +79,11 @@ assayNames(spe)
 ```
 
 
-Calculate log-transformed normalized counts (logcounts) on the smoothed expression values:
+Calculate log-transformed normalized counts (logcounts) on the smoothed expression counts. Here, the argument `assay.type = "counts_smooth"` specifies that we want to calculate logcounts using the smoothed counts from `smoothclust`.
 
 ```{r}
 # calculate logcounts
-spe <- logNormCounts(spe)
+spe <- logNormCounts(spe, assay.type = "counts_smooth")
 
 assayNames(spe)
 ```
