@@ -72,6 +72,11 @@
 #'   Kernel weights below this value are set to zero for computational
 #'   efficiency. Only used for \code{method = "kernel"}. Default = 0.05.
 #' 
+#' @param sparse Whether to return output assay or numeric matrix as sparse
+#'   matrix. Default = TRUE. In most cases (e.g. if using
+#'   \code{SpatialExperiment} objects) this should be left as TRUE. Set to FALSE
+#'   to return a dense matrix instead.
+#' 
 #' 
 #' @return Returns spatially smoothed expression values, which can then be used
 #'   as the input for further downstream analyses. Results are returned either
@@ -106,7 +111,8 @@
 #' 
 smoothclust <- function(input, assay_name = "counts", spatial_coords = NULL, 
                         method = c("uniform", "kernel", "knn"), 
-                        bandwidth = 0.05, truncate = 0.05, k = 18) {
+                        bandwidth = 0.05, k = 18, truncate = 0.05, 
+                        sparse = TRUE) {
   
   method <- match.arg(method, c("uniform", "kernel", "knn"))
   
@@ -236,6 +242,10 @@ smoothclust <- function(input, assay_name = "counts", spatial_coords = NULL,
   stopifnot(ncol(vals_smooth) == ncol(input))
   rownames(vals_smooth) <- rownames(input)
   colnames(vals_smooth) <- colnames(input)
+  
+  if (sparse) {
+    vals_smooth <- as(vals_smooth, "TsparseMatrix")
+  }
   
   # return results (smoothed values)
   if (is(input, "SpatialExperiment")) {

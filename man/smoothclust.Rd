@@ -10,8 +10,9 @@ smoothclust(
   spatial_coords = NULL,
   method = c("uniform", "kernel", "knn"),
   bandwidth = 0.05,
+  k = 18,
   truncate = 0.05,
-  k = 18
+  sparse = TRUE
 )
 }
 \arguments{
@@ -64,14 +65,19 @@ equal to 5% of the width or height (whichever is greater) of the tissue
 area. Weights for \code{method = "kernel"} are truncated at small values
 for computational efficiency. Default = 0.05.}
 
-\item{truncate}{Truncation threshold parameter if \code{method = "kernel"}.
-Kernel weights below this value are set to zero for computational
-efficiency. Only used for \code{method = "kernel"}. Default = 0.05.}
-
 \item{k}{Number of nearest neighbors parameter for \code{method = "knn"}.
 Only used for \code{method == "knn"}. Unweighted averages are calculated
 across the index point and its k nearest neighbors. Default = 18 (based on
 two layers in honeycomb pattern for 10x Genomics Visium platform).}
+
+\item{truncate}{Truncation threshold parameter if \code{method = "kernel"}.
+Kernel weights below this value are set to zero for computational
+efficiency. Only used for \code{method = "kernel"}. Default = 0.05.}
+
+\item{sparse}{Whether to return output assay or numeric matrix as sparse
+matrix. Default = TRUE. In most cases (e.g. if using
+\code{SpatialExperiment} objects) this should be left as TRUE. Set to FALSE
+to return a dense matrix instead.}
 }
 \value{
 Returns spatially smoothed expression values, which can then be used

@@ -9,7 +9,7 @@ out <- smoothclust(input, spatial_coords = spatial_coords)
 
 
 test_that("smoothclust runs with non-SPE inputs", {
-  expect_true(is.matrix(out))
-  expect_true(is.numeric(out))
+  expect_s4_class(out, "dgTMatrix")
+  expect_s4_class(out, "Matrix")
   expect_equal(dim(out), c(20, 100))
 })
