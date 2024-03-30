@@ -95,10 +95,7 @@ smoothness_metric <- function(spatial_coords, labels, k = 6) {
   
   # calculate number of non-matching labels
   stopifnot(length(labels) == nrow(neigh_labels))
-  vals <- rep(0, length(labels))
-  for (i in seq_len(ncol(neigh_labels))) {
-    vals <- vals + as.numeric(labels != neigh_labels[, i])
-  }
+  vals <- rowSums(labels != neigh_labels)
   
   # return vector and average value
   list(n_discordant = vals, mean_discordant = mean(vals))
