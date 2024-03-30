@@ -175,10 +175,6 @@ smoothclust <- function(input, assay_name = "counts", spatial_coords = NULL,
     stopifnot(all(sapply(weights, length) == length(weights)))
     stopifnot(all(sapply(keep, length) == length(keep)))
     
-    # truncate weights and neighbors
-    # weights <- mapply(function(w, k) {w[k]}, weights, keep)
-    # neigh <- mapply(function(n, k) {n[k]}, neigh, keep)
-    
     # truncate weights and fill vector with zeros
     # note rowWeightedMeans() requires full-length weights vectors so cannot subset
     weights <- mapply(function(w, k) {
