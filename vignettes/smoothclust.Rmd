@@ -100,7 +100,7 @@ We use a relatively small number of clusters for demonstration purposes in this 
 # preprocessing steps for clustering
 
 # remove mitochondrial genes
-is_mito <- grepl("(^MT-)|(^mt-)", rowData(spe)$gene_name)
+is_mito <- grepl("(^mt-)", rowData(spe)$gene_name, ignore.case = TRUE)
 table(is_mito)
 spe <- spe[!is_mito, ]
 dim(spe)

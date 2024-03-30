@@ -53,7 +53,7 @@ spe <- logNormCounts(spe, assay.type = "counts_smooth")
 
 # preprocessing steps for clustering
 # remove mitochondrial genes
-is_mito <- grepl("(^MT-)|(^mt-)", rowData(spe)$gene_name)
+is_mito <- grepl("(^mt-)", rowData(spe)$gene_name, ignore.case = TRUE)
 spe <- spe[!is_mito, ]
 # select top highly variable genes (HVGs)
 dec <- modelGeneVar(spe)
