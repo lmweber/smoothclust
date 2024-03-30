@@ -68,6 +68,8 @@ assayNames(spe)
 
 Run `smoothclust` using default parameter settings, which have been selected to be appropriate for Visium data from human tissue.
 
+The method for smoothing can be specified by providing the `method` argument, with available options `uniform`, `kernel`, and `knn`. Additional arguments can be used to set parameter values, including `bandwidth`, `k,` and `truncate`, depending on the choice of method. For more details, see the function documentation (`?smoothclust`) or the paper (in preparation).
+
 ```{r, results="hide"}
 # run smoothclust
 spe <- smoothclust(spe)
