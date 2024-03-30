@@ -77,8 +77,12 @@
 #' 
 smoothness_metric <- function(spatial_coords, labels, k = 6) {
   
+  stopifnot(!is.null(spatial_coords), 
+            is.numeric(spatial_coords), 
+            is.matrix(spatial_coords), 
+            ncol(spatial_coords) == 2)
   stopifnot(length(labels) == nrow(spatial_coords))
-  stopifnot(ncol(spatial_coords) == 2)
+  stopifnot(is.numeric(k) && length(k) == 1)
   
   # calculate k nearest neighbors for each point
   neigh <- knearneigh(spatial_coords, k = k)$nn

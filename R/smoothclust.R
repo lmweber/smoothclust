@@ -116,6 +116,12 @@ smoothclust <- function(input, assay_name = "counts", spatial_coords = NULL,
   
   method <- match.arg(method, c("uniform", "kernel", "knn"))
   
+  stopifnot(is.character(assay_name) && length(assay_name) == 1)
+  stopifnot(is.numeric(bandwidth))
+  stopifnot(is.numeric(k))
+  stopifnot(is.numeric(truncate))
+  stopifnot(is.logical(sparse) && length(sparse) == 1)
+  
   if (is(input, "SpatialExperiment")) {
     spe <- input
     stopifnot(assay_name %in% assayNames(spe))
@@ -124,8 +130,12 @@ smoothclust <- function(input, assay_name = "counts", spatial_coords = NULL,
   } else {
     stopifnot(is.numeric(input))
     vals <- input
-    stopifnot(is.numeric(spatial_coords))
   }
+  
+  stopifnot(!is.null(spatial_coords), 
+            is.numeric(spatial_coords), 
+            is.matrix(spatial_coords), 
+            ncol(spatial_coords) == 2)
   
   if (method %in% c("uniform", "kernel")) {
     # convert bandwidth to same units as distances
