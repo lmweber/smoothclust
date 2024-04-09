@@ -7,6 +7,6 @@ test_that("results object has correct structure", {
   expect_length(res, 2)
 })
 
-test_that("value of metric for example dataset is correct", {
-  expect_equal(signif(res$mean_discordant, 4), 0.5622)
+test_that("metric output values for example dataset are correct", {
+  expect_equal(sum(res$n_discordant), 2046)
 })
