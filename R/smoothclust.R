@@ -170,6 +170,9 @@ smoothclust <- function(input, assay_name = "counts", spatial_coords = NULL,
     }
   }
   
+  # remove any zeros from sets of neighbors (points with no neighbors)
+  neigh <- lapply(neigh, function(n) n[n != 0])
+  
   # calculate weights for kernel method
   if (method == "kernel") {
     # calculate exponential kernel weights
