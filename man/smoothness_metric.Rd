@@ -43,10 +43,8 @@ spe <- Visium_humanDLPFC()
 # keep spots over tissue
 spe <- spe[, colData(spe)$in_tissue == 1]
 
-# run smoothclust
-# using "knn" method for faster runtime in this example
-# see vignette for example using default method
-spe <- smoothclust(spe, method = "knn", k = 6)
+# run smoothclust using default parameters
+spe <- smoothclust(spe)
 
 # calculate logcounts
 spe <- logNormCounts(spe, assay.type = "counts_smooth")

@@ -17,5 +17,5 @@ test_that("example object has correct assays", {
 test_that("first few output values in example object are correct", {
   expect_equal(
     unname(signif(as.numeric(assays(spe)[["counts_smooth"]][1:6, 1], 6))), 
-    c(0, 0, 0, 0.142857, 0, 0))
+    c(0, 0, 0, 0.027027, 0, 0))
 })

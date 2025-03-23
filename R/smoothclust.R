@@ -102,12 +102,10 @@
 #' # keep spots over tissue
 #' spe <- spe[, colData(spe)$in_tissue == 1]
 #' 
-#' # run smoothclust
-#' # using "knn" method for faster runtime in this example
-#' spe <- smoothclust(spe, method = "knn", k = 6)
+#' # run smoothclust using default parameters
+#' spe <- smoothclust(spe)
 #' 
-#' # see vignette for extended example using default method and including
-#' # downstream analysis steps
+#' # see vignette for extended example including downstream analyses
 #' 
 smoothclust <- function(input, assay_name = "counts", spatial_coords = NULL, 
                         method = c("uniform", "kernel", "knn"), 
@@ -168,10 +166,9 @@ smoothclust <- function(input, assay_name = "counts", spatial_coords = NULL,
       # include distance (zero) to self point
       dists <- mapply(c, 0, dists, SIMPLIFY = FALSE)
     }
+    # remove any zeros from sets of neighbors (points with no neighbors)
+    neigh <- lapply(neigh, function(n) n[n != 0])
   }
-  
-  # remove any zeros from sets of neighbors (points with no neighbors)
-  neigh <- lapply(neigh, function(n) n[n != 0])
   
   # calculate weights for kernel method
   if (method == "kernel") {

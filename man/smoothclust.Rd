@@ -110,11 +110,9 @@ spe <- Visium_humanDLPFC()
 # keep spots over tissue
 spe <- spe[, colData(spe)$in_tissue == 1]
 
-# run smoothclust
-# using "knn" method for faster runtime in this example
-spe <- smoothclust(spe, method = "knn", k = 6)
+# run smoothclust using default parameters
+spe <- smoothclust(spe)
 
-# see vignette for extended example using default method and including
-# downstream analysis steps
+# see vignette for extended example including downstream analyses
 
 }
