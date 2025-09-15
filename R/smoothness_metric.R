@@ -26,7 +26,7 @@
 #'   point) and (ii) the average value across all points.
 #' 
 #' 
-#' @importFrom spdep knearneigh
+#' @importFrom BiocNeighbors findKNN
 #' 
 #' @export
 #' 
@@ -82,18 +82,26 @@ smoothness_metric <- function(spatial_coords, labels, k = 6) {
   stopifnot(length(labels) == nrow(spatial_coords))
   stopifnot(is.numeric(k) && length(k) == 1)
   
-  # calculate k nearest neighbors for each point
-  neigh <- knearneigh(spatial_coords, k = k)$nn
+  # --- fast k-nearest neighbor search ---
   
-  # calculate ordered columns of cluster labels
-  neigh_labels <- matrix(NA, nrow = nrow(neigh), ncol = ncol(neigh))
-  for (i in seq_len(ncol(neigh_labels))) {
-    neigh_labels[, i] <- labels[neigh[, i]]
-  }
+  # search for k + 1 neighbors to find the k other neighbors
+  # (first neighbor is always the point itself)
+  nn_data <- findKNN(spatial_coords, k = k + 1, 
+                     get.index = TRUE, get.distance = FALSE)
+  nn_mat <- nn_data$index
   
-  # calculate number of non-matching labels
-  stopifnot(length(labels) == nrow(neigh_labels))
+  # exclude first column (self-neighbor) to get k-nearest neighbors
+  neigh <- nn_mat[, -1, drop = FALSE]
+  
+  # --- vectorized label lookup and calculation ---
+  
+  # create matrix of neighbor labels using a single matrix-indexing operation
+  neigh_labels <- matrix(labels[neigh], ncol = k)
+  
+  # compare 'labels' vector against each column of 'neigh_labels'
   vals <- rowSums(labels != neigh_labels)
+  
+  # --- return results ---
   
   # return vector and average value
   list(n_discordant = vals, mean_discordant = mean(vals))

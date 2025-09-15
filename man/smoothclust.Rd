@@ -106,6 +106,6 @@ spe <- spe[, colData(spe)$in_tissue == 1]
 # run smoothclust using default parameters
 spe <- smoothclust(spe)
 
-# see vignette for extended example including downstream analyses
+# see vignette for extended example
 
 }

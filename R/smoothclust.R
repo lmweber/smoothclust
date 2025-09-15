@@ -99,7 +99,7 @@
 #' # run smoothclust using default parameters
 #' spe <- smoothclust(spe)
 #' 
-#' # see vignette for extended example including downstream analyses
+#' # see vignette for extended example
 #' 
 smoothclust <- function(input, assay_name = "counts", spatial_coords = NULL, 
                         method = c("uniform", "kernel", "knn"), 
