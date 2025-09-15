@@ -71,11 +71,6 @@
 #'   Kernel weights below this value are set to zero for computational
 #'   efficiency. Only used for \code{method = "kernel"}. Default = 0.05.
 #' 
-#' @param sparse Whether to return output assay or numeric matrix as sparse
-#'   matrix. Default = TRUE. In most cases (e.g. if using
-#'   \code{SpatialExperiment} objects) this should be left as TRUE. Set to FALSE
-#'   to return a dense matrix instead.
-#' 
 #' 
 #' @return Returns spatially smoothed expression values, which can then be used
 #'   as the input for further downstream analyses. Results are returned either
@@ -86,10 +81,8 @@
 #' 
 #' @importFrom SpatialExperiment spatialCoords
 #' @importFrom SummarizedExperiment assays 'assays<-' assayNames
-#' @importFrom BiocNeighbors findNeighbors
+#' @importFrom BiocNeighbors findNeighbors findKNN
 #' @importFrom Matrix sparseMatrix
-#' @importFrom sparseMatrixStats rowMeans2 rowWeightedMeans
-#' @importFrom spdep dnearneigh nbdists knearneigh
 #' @importFrom methods is as
 #' @importFrom utils txtProgressBar setTxtProgressBar
 #' 
@@ -110,8 +103,7 @@
 #' 
 smoothclust <- function(input, assay_name = "counts", spatial_coords = NULL, 
                         method = c("uniform", "kernel", "knn"), 
-                        bandwidth = 0.05, k = 18, truncate = 0.05, 
-                        sparse = TRUE) {
+                        bandwidth = 0.05, k = 18, truncate = 0.05) {
   
   method <- match.arg(method, c("uniform", "kernel", "knn"))
   
@@ -119,7 +111,6 @@ smoothclust <- function(input, assay_name = "counts", spatial_coords = NULL,
   stopifnot(is.numeric(bandwidth))
   stopifnot(is.numeric(k))
   stopifnot(is.numeric(truncate))
-  stopifnot(is.logical(sparse) && length(sparse) == 1)
   
   if (is(input, "SpatialExperiment")) {
     spe <- input
@@ -136,7 +127,7 @@ smoothclust <- function(input, assay_name = "counts", spatial_coords = NULL,
             is.matrix(spatial_coords), 
             ncol(spatial_coords) == 2)
   
-  # convert 'vals' to sparse matrix
+  # convert vals to CsparseMatrix for efficient multiplication
   vals <- as(vals, "CsparseMatrix")
   N <- ncol(vals)
   
@@ -148,18 +139,18 @@ smoothclust <- function(input, assay_name = "counts", spatial_coords = NULL,
     bandwidth_scaled <- bandwidth * range_max
   }
   
+  # --- method-specific steps to construct weights matrix (W) ---
+  
   if (method == "uniform") {
+    # 1. fast neighbor search
+    nn_data <- findNeighbors(spatial_coords, threshold = bandwidth_scaled, 
+                             get.index = TRUE, get.distance = FALSE)
+    nn_list <- nn_data$index
     
-    # fast neighbor search
-    nn_list <- findNeighbors(spatial_coords, threshold = bandwidth_scaled, 
-                             get.index = TRUE, get.distance = FALSE)$index
-    
-    # sparse matrix multiplication
-    
-    # 1. get number of neighbors for each spot
+    # 2. get number of neighbors for each spot
     n_neighbors <- lengths(nn_list)
     
-    # 2. prepare indices and values for sparse weights matrix W
+    # 3. prepare indices and values for sparse weights matrix W
     # row indices: the neighbors themselves
     i_idx <- unlist(nn_list, use.names = FALSE)
     # column indices: the spot being considered (repeated for each of its neighbors)
@@ -167,117 +158,52 @@ smoothclust <- function(input, assay_name = "counts", spatial_coords = NULL,
     # values: 1 / (number of neighbors for that column)
     x_val <- rep(1 / n_neighbors, n_neighbors)
     
-    # 3. construct sparse weights matrix (spots x spots)
-    W <- sparseMatrix(i = i_idx, j = j_idx, x = x_val, dims = c(N, N))
+  } else if (method == "kernel") {
+    # 1. determine max search distance based on truncation threshold
+    # to avoid slow all-vs-all distance calculation
+    max_dist <- -bandwidth_scaled * log(truncate)
     
-    # 4. perform entire smoothing operation in one step
-    vals_smooth <- vals %*% W
+    # 2. fast neighbor search within this radius
+    nn_data <- findNeighbors(spatial_coords, threshold = max_dist, 
+                             get.index = TRUE, get.distance = TRUE)
+    
+    # 3. calculate raw exponential kernel weights
+    i_idx <- unlist(nn_data$index, use.names = FALSE)
+    j_idx <- rep(seq_along(nn_data$index), lengths(nn_data$index))
+    dists <- unlist(nn_data$distance, use.names = FALSE)
+    
+    raw_weights <- exp(-dists / bandwidth_scaled)
+    
+    # 4. normalize weights so each column in W sums to 1
+    col_sums <- as.vector(tapply(raw_weights, j_idx, sum))
+    x_val <- raw_weights / col_sums[j_idx]
+    
+  } else if (method == "knn") {
+    # 1. fast k-nearest neighbor search (k+1 to include self)
+    nn_data <- findKNN(spatial_coords, k = k + 1, 
+                       get.index = TRUE, get.distance = FALSE)
+    
+    # 2. prepare indices and values for W; weight is uniform 1/(k+1)
+    i_idx <- as.vector(t(nn_data$index))
+    j_idx <- rep(seq_len(N), each = k + 1)
+    x_val <- rep(1 / (k + 1), length(i_idx))
   }
   
-  if (method == "kernel") {
-    # note: legacy slow version - to update
-    
-    # calculate neighbors (note self is excluded)
-    neigh <- dnearneigh(spatial_coords, d1 = 0, d2 = Inf)
-    # calculate distances
-    dists <- nbdists(neigh, coords = spatial_coords)
-    
-    # put back self within set of neighbors for each point
-    # note: self point is first element in vector
-    stopifnot(length(neigh) == ncol(vals))
-    # include index of self point
-    neigh <- mapply(c, as.list(seq_len(ncol(vals))), neigh, SIMPLIFY = FALSE)
-    if (method == "kernel") {
-      stopifnot(length(dists) == ncol(vals))
-      # include distance (zero) to self point
-      dists <- mapply(c, 0, dists, SIMPLIFY = FALSE)
-    }
-    # remove any zeros from sets of neighbors (points with no neighbors)
-    neigh <- lapply(neigh, function(n) n[n != 0])
-    
-    # calculate weights for kernel method
-    
-    # calculate exponential kernel weights
-    exp_kernel <- function(d) {exp(-d / bandwidth_scaled)}  ## d = Euclidean distance
-    weights <- lapply(dists, exp_kernel)
-    
-    # truncate kernel weights below threshold
-    keep <- lapply(weights, function(w) {w >= truncate})
-    
-    stopifnot(length(weights) == length(neigh))
-    stopifnot(length(weights) == length(dists))
-    stopifnot(length(weights) == length(keep))
-    stopifnot(all(vapply(weights, length, integer(1)) == length(weights)))
-    stopifnot(all(vapply(keep, length, integer(1)) == length(keep)))
-    
-    # truncate weights and fill vector with zeros
-    # note rowWeightedMeans() requires full-length weights vectors so cannot subset
-    weights <- mapply(function(w, k) {
-      w_trunc <- rep(0, length(w))
-      w_trunc[k] <- w[k]
-      w_trunc
-    }, weights, keep, SIMPLIFY = FALSE)
-    
-    # order weights to match original order of points
-    weights <- mapply(function(w, n) {
-      w[order(n)]
-    }, weights, neigh, SIMPLIFY = FALSE)
-  }
+  # --- construct weights matrix W and perform single matrix multiplication ---
   
-  if (method == "knn") {
-    # note: legacy slow version - to update
-    
-    neigh <- knearneigh(spatial_coords, k = k)$nn
-    # include index point
-    stopifnot(nrow(neigh) == ncol(vals))
-    neigh <- cbind(seq_len(nrow(neigh)), neigh)
-  }
+  # 1. construct weights matrix
+  W <- sparseMatrix(i = i_idx, j = j_idx, x = x_val, dims = c(N, N), repr = "C")
   
-  if (method %in% c("kernel", "knn")) {
-    # note: legacy slow version - to update
-    
-    # calculate smoothed values
-    # note: using sparse matrices
-    
-    vals_smooth <- matrix(as.numeric(NA), nrow = nrow(vals), ncol = ncol(vals))
-    
-    # sparse matrix class for sparseMatrixStats
-    vals <- as(vals, "CsparseMatrix")
-    stopifnot(all(dim(vals) == dim(vals_smooth)))
-    
-    pb <- txtProgressBar(0, ncol(vals_smooth), style = 3)
-    
-    if (method == "kernel") {
-      for (i in seq_len(ncol(vals_smooth))) {
-        setTxtProgressBar(pb, i)
-        # calculate weighted average over subset of neighbors
-        vals_smooth[, i] <- rowWeightedMeans(vals, w = weights[[i]])
-      }
-    }
-    
-    if (method == "knn") {
-      stopifnot(nrow(neigh) == ncol(vals_smooth))
-      for (i in seq_len(ncol(vals_smooth))) {
-        setTxtProgressBar(pb, i)
-        # calculate average over subset of neighbors
-        vals_smooth[, i] <- rowMeans2(vals, cols = neigh[i, ])
-      }
-    }
-    
-    close(pb)
-  }
+  # 2. perform smoothing operation in one matrix multiplication step
+  vals_smooth <- vals %*% W
+  
+  # --- return results ---
   
   stopifnot(nrow(vals_smooth) == nrow(input))
   stopifnot(ncol(vals_smooth) == ncol(input))
+  
   rownames(vals_smooth) <- rownames(input)
   colnames(vals_smooth) <- colnames(input)
-  
-  # if (method %in% c("kernel", "knn")) {
-  #   # note: legacy slow version - to update
-  #   if (sparse) {
-  #     vals_smooth <- as(vals_smooth, "TsparseMatrix")
-  #   }
-  # }
   
   # return results (smoothed values)
   if (is(input, "SpatialExperiment")) {

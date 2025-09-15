@@ -10,7 +10,7 @@ out <- smoothclust(input, spatial_coords = spatial_coords, bandwidth = 0.25)
 
 
 test_that("smoothclust runs with non-SPE inputs", {
-  # expect_s4_class(out, "dgCMatrix")  # to do - put back after updating kernel and knn methods speedup
+  expect_s4_class(out, "dgCMatrix")
   expect_s4_class(out, "Matrix")
   expect_equal(dim(out), c(20, 100))
 })
