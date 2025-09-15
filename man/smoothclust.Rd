@@ -30,8 +30,7 @@ specifies the name of the \code{assay} containing the expression values to
 be smoothed. In most cases, this will be \code{counts}, which contains raw
 expression counts. Alternatively, \code{logcounts} may also be used. Note
 that if \code{logcounts} are used, the smoothed values represent geometric
-averages, which are more difficult to interpret. We recommend using raw
-counts if possible. This argument is only used if the input is a
+averages. This argument is only used if the input is a
 \code{SpatialExperiment} object. Default = \code{counts}.}
 
 \item{spatial_coords}{Numeric matrix of spatial coordinates, assumed to
@@ -88,14 +87,14 @@ Returns spatially smoothed expression values, which can then be used
   type.
 }
 \description{
-Method for segmentation of spatial domains and spatially-aware clustering.
+Method for identification of spatial domains and spatially-aware clustering.
 }
 \details{
-Method for segmentation of spatial domains and spatially-aware clustering in
-spatial transcriptomics data.
+Method for identification of spatial domains and spatially-aware clustering
+in spatial transcriptomics data.
 
-Method for segmentation of spatial domains and spatially-aware clustering in
-spatial transcriptomics data. The method generates spatial domains with
+Method for identification of spatial domains and spatially-aware clustering
+in spatial transcriptomics data. The method generates spatial domains with
 smooth boundaries by smoothing gene expression profiles across neighboring
 spatial locations, followed by unsupervised clustering. Spatial domains
 consisting of consistent mixtures of cell types may then be further

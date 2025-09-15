@@ -1,5 +1,5 @@
 Package: smoothclust
-Version: 1.5.3
+Version: 1.5.4
 Title: smoothclust
 Description: Method for identification of spatial domains and spatially-aware 
     clustering in spatial transcriptomics data. The method generates spatial 
@@ -28,6 +28,8 @@ Depends:
 Imports: 
     SpatialExperiment, 
     SummarizedExperiment, 
+    BiocNeighbors, 
+    Matrix, 
     sparseMatrixStats, 
     spdep, 
     methods, 
@@ -42,4 +44,4 @@ Suggests:
     scater, 
     ggspavis, 
     testthat
-RoxygenNote: 7.3.2
+RoxygenNote: 7.3.3

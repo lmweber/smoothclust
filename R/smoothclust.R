@@ -86,6 +86,8 @@
 #' 
 #' @importFrom SpatialExperiment spatialCoords
 #' @importFrom SummarizedExperiment assays 'assays<-' assayNames
+#' @importFrom BiocNeighbors findNeighbors
+#' @importFrom Matrix sparseMatrix
 #' @importFrom sparseMatrixStats rowMeans2 rowWeightedMeans
 #' @importFrom spdep dnearneigh nbdists knearneigh
 #' @importFrom methods is as
@@ -134,6 +136,10 @@ smoothclust <- function(input, assay_name = "counts", spatial_coords = NULL,
             is.matrix(spatial_coords), 
             ncol(spatial_coords) == 2)
   
+  # convert 'vals' to sparse matrix
+  vals <- as(vals, "CsparseMatrix")
+  N <- ncol(vals)
+  
   if (method %in% c("uniform", "kernel")) {
     # convert bandwidth to same units as distances
     range_x <- abs(diff(range(spatial_coords[, 1])))
@@ -143,18 +149,39 @@ smoothclust <- function(input, assay_name = "counts", spatial_coords = NULL,
   }
   
   if (method == "uniform") {
-    # calculate neighbors (note self is excluded)
-    neigh <- dnearneigh(spatial_coords, d1 = 0, d2 = bandwidth_scaled)
+    
+    # fast neighbor search
+    nn_list <- findNeighbors(spatial_coords, threshold = bandwidth_scaled, 
+                             get.index = TRUE, get.distance = FALSE)$index
+    
+    # sparse matrix multiplication
+    
+    # 1. get number of neighbors for each spot
+    n_neighbors <- lengths(nn_list)
+    
+    # 2. prepare indices and values for sparse weights matrix W
+    # row indices: the neighbors themselves
+    i_idx <- unlist(nn_list, use.names = FALSE)
+    # column indices: the spot being considered (repeated for each of its neighbors)
+    j_idx <- rep(seq_along(nn_list), n_neighbors)
+    # values: 1 / (number of neighbors for that column)
+    x_val <- rep(1 / n_neighbors, n_neighbors)
+    
+    # 3. construct sparse weights matrix (spots x spots)
+    W <- sparseMatrix(i = i_idx, j = j_idx, x = x_val, dims = c(N, N))
+    
+    # 4. perform entire smoothing operation in one step
+    vals_smooth <- vals %*% W
   }
   
   if (method == "kernel") {
+    # note: legacy slow version - to update
+    
     # calculate neighbors (note self is excluded)
     neigh <- dnearneigh(spatial_coords, d1 = 0, d2 = Inf)
     # calculate distances
     dists <- nbdists(neigh, coords = spatial_coords)
-  }
-  
-  if (method %in% c("uniform", "kernel")) {
+    
     # put back self within set of neighbors for each point
     # note: self point is first element in vector
     stopifnot(length(neigh) == ncol(vals))
@@ -167,10 +194,9 @@ smoothclust <- function(input, assay_name = "counts", spatial_coords = NULL,
     }
     # remove any zeros from sets of neighbors (points with no neighbors)
     neigh <- lapply(neigh, function(n) n[n != 0])
-  }
-  
-  # calculate weights for kernel method
-  if (method == "kernel") {
+    
+    # calculate weights for kernel method
+    
     # calculate exponential kernel weights
     exp_kernel <- function(d) {exp(-d / bandwidth_scaled)}  ## d = Euclidean distance
     weights <- lapply(dists, exp_kernel)
@@ -199,58 +225,59 @@ smoothclust <- function(input, assay_name = "counts", spatial_coords = NULL,
   }
   
   if (method == "knn") {
+    # note: legacy slow version - to update
+    
     neigh <- knearneigh(spatial_coords, k = k)$nn
     # include index point
     stopifnot(nrow(neigh) == ncol(vals))
     neigh <- cbind(seq_len(nrow(neigh)), neigh)
   }
   
-  # calculate smoothed values
-  # note: using sparse matrices
-  
-  vals_smooth <- matrix(as.numeric(NA), nrow = nrow(vals), ncol = ncol(vals))
-  
-  # sparse matrix class for sparseMatrixStats
-  vals <- as(vals, "CsparseMatrix")
-  stopifnot(all(dim(vals) == dim(vals_smooth)))
-  
-  pb <- txtProgressBar(0, ncol(vals_smooth), style = 3)
-  
-  if (method == "uniform") {
-    for (i in seq_len(ncol(vals_smooth))) {
-      setTxtProgressBar(pb, i)
-      # calculate average over subset of neighbors
-      vals_smooth[, i] <- rowMeans2(vals, cols = neigh[[i]])
+  if (method %in% c("kernel", "knn")) {
+    # note: legacy slow version - to update
+    
+    # calculate smoothed values
+    # note: using sparse matrices
+    
+    vals_smooth <- matrix(as.numeric(NA), nrow = nrow(vals), ncol = ncol(vals))
+    
+    # sparse matrix class for sparseMatrixStats
+    vals <- as(vals, "CsparseMatrix")
+    stopifnot(all(dim(vals) == dim(vals_smooth)))
+    
+    pb <- txtProgressBar(0, ncol(vals_smooth), style = 3)
+    
+    if (method == "kernel") {
+      for (i in seq_len(ncol(vals_smooth))) {
+        setTxtProgressBar(pb, i)
+        # calculate weighted average over subset of neighbors
+        vals_smooth[, i] <- rowWeightedMeans(vals, w = weights[[i]])
+      }
     }
-  }
-  
-  if (method == "kernel") {
-    for (i in seq_len(ncol(vals_smooth))) {
-      setTxtProgressBar(pb, i)
-      # calculate weighted average over subset of neighbors
-      vals_smooth[, i] <- rowWeightedMeans(vals, w = weights[[i]])
+    
+    if (method == "knn") {
+      stopifnot(nrow(neigh) == ncol(vals_smooth))
+      for (i in seq_len(ncol(vals_smooth))) {
+        setTxtProgressBar(pb, i)
+        # calculate average over subset of neighbors
+        vals_smooth[, i] <- rowMeans2(vals, cols = neigh[i, ])
+      }
     }
+    
+    close(pb)
   }
-  
-  if (method == "knn") {
-    stopifnot(nrow(neigh) == ncol(vals_smooth))
-    for (i in seq_len(ncol(vals_smooth))) {
-      setTxtProgressBar(pb, i)
-      # calculate average over subset of neighbors
-      vals_smooth[, i] <- rowMeans2(vals, cols = neigh[i, ])
-    }
-  }
-  
-  close(pb)
   
   stopifnot(nrow(vals_smooth) == nrow(input))
   stopifnot(ncol(vals_smooth) == ncol(input))
   rownames(vals_smooth) <- rownames(input)
   colnames(vals_smooth) <- colnames(input)
   
-  if (sparse) {
-    vals_smooth <- as(vals_smooth, "TsparseMatrix")
-  }
+  # if (method %in% c("kernel", "knn")) {
+  #   # note: legacy slow version - to update
+  #   if (sparse) {
+  #     vals_smooth <- as(vals_smooth, "TsparseMatrix")
+  #   }
+  # }
   
   # return results (smoothed values)
   if (is(input, "SpatialExperiment")) {

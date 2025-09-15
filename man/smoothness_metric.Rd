@@ -17,7 +17,7 @@ dimensions). For example, `spatial_coords = spatialCoords(spe)` if using a
 \code{SpatialExperiment} object.}
 
 \item{k}{Number of k nearest neighbors to use in calculation. Default = 6
-(from 10x Genomics Visium platform).}
+(e.g. for hexagonal arrangement in 10x Genomics Visium platform).}
 }
 \value{
 Returns a list containing (i) a vector of values at each point (i.e.
