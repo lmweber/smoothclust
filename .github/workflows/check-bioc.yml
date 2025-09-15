@@ -196,6 +196,11 @@ jobs:
           BiocManager::install(version = "${{ matrix.config.bioc }}", ask = FALSE, force = TRUE)
         shell: Rscript {0}
 
+      - name: Install SpatialExperiment from source due to superclass ExpData error
+        run: |
+          R -e "BiocManager::install('SpatialExperiment', type = 'source')"
+        shell: bash
+
       - name: Install dependencies pass 1
         run: |
           ## Try installing the package dependencies in steps. First the local
