@@ -2,3 +2,5 @@
 ^\.Rproj\.user$
 ^\.github$
 ^.*\.png$
+^\.positai$
+^\.claude$
