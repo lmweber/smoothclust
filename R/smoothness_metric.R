@@ -78,9 +78,11 @@ smoothness_metric <- function(spatial_coords, labels, k = 6) {
   stopifnot(!is.null(spatial_coords), 
             is.numeric(spatial_coords), 
             is.matrix(spatial_coords), 
-            ncol(spatial_coords) == 2)
+            ncol(spatial_coords) == 2, 
+            all(is.finite(spatial_coords)))
   stopifnot(length(labels) == nrow(spatial_coords))
-  stopifnot(is.numeric(k) && length(k) == 1)
+  stopifnot(is.numeric(k) && length(k) == 1 && is.finite(k) && 
+              k > 0 && k == floor(k) && k < nrow(spatial_coords))
   
   # --- fast k-nearest neighbor search ---
   

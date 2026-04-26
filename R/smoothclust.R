@@ -108,9 +108,12 @@ smoothclust <- function(input, assay_name = "counts", spatial_coords = NULL,
   method <- match.arg(method, c("uniform", "kernel", "knn"))
   
   stopifnot(is.character(assay_name) && length(assay_name) == 1)
-  stopifnot(is.numeric(bandwidth))
-  stopifnot(is.numeric(k))
-  stopifnot(is.numeric(truncate))
+  stopifnot(is.numeric(bandwidth) && length(bandwidth) == 1 && 
+              is.finite(bandwidth) && bandwidth > 0)
+  stopifnot(is.numeric(k) && length(k) == 1 && is.finite(k) && 
+              k > 0 && k == floor(k))
+  stopifnot(is.numeric(truncate) && length(truncate) == 1 && 
+              is.finite(truncate) && truncate > 0 && truncate < 1)
   
   if (is(input, "SpatialExperiment")) {
     spe <- input
@@ -125,11 +128,16 @@ smoothclust <- function(input, assay_name = "counts", spatial_coords = NULL,
   stopifnot(!is.null(spatial_coords), 
             is.numeric(spatial_coords), 
             is.matrix(spatial_coords), 
-            ncol(spatial_coords) == 2)
+            ncol(spatial_coords) == 2, 
+            all(is.finite(spatial_coords)))
   
   # convert vals to CsparseMatrix for efficient multiplication
   vals <- as(vals, "CsparseMatrix")
   N <- ncol(vals)
+  stopifnot(nrow(spatial_coords) == N)
+  if (method == "knn") {
+    stopifnot(k < N)
+  }
   
   if (method %in% c("uniform", "kernel")) {
     # convert bandwidth to same units as distances
