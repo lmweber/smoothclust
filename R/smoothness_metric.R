@@ -84,19 +84,15 @@ smoothness_metric <- function(spatial_coords, labels, k = 6) {
   
   # --- fast k-nearest neighbor search ---
   
-  # search for k + 1 neighbors to find the k other neighbors
-  # (first neighbor is always the point itself)
-  nn_data <- findKNN(spatial_coords, k = k + 1, 
+  # search for k nearest neighbors
+  nn_data <- findKNN(spatial_coords, k = k, 
                      get.index = TRUE, get.distance = FALSE)
-  nn_mat <- nn_data$index
-  
-  # exclude first column (self-neighbor) to get k-nearest neighbors
-  neigh <- nn_mat[, -1, drop = FALSE]
+  neigh <- nn_data$index
   
   # --- vectorized label lookup and calculation ---
   
   # create matrix of neighbor labels using a single matrix-indexing operation
-  neigh_labels <- matrix(labels[neigh], ncol = k)
+  neigh_labels <- matrix(labels[neigh], ncol = ncol(neigh))
   
   # compare 'labels' vector against each column of 'neigh_labels'
   vals <- rowSums(labels != neigh_labels)

@@ -145,7 +145,7 @@ smoothclust <- function(input, assay_name = "counts", spatial_coords = NULL,
     # 1. fast neighbor search
     nn_data <- findNeighbors(spatial_coords, threshold = bandwidth_scaled, 
                              get.index = TRUE, get.distance = FALSE)
-    nn_list <- nn_data$index
+    nn_list <- Map(c, seq_along(nn_data$index), nn_data$index)
     
     # 2. get number of neighbors for each spot
     n_neighbors <- lengths(nn_list)
@@ -168,9 +168,11 @@ smoothclust <- function(input, assay_name = "counts", spatial_coords = NULL,
                              get.index = TRUE, get.distance = TRUE)
     
     # 3. calculate raw exponential kernel weights
-    i_idx <- unlist(nn_data$index, use.names = FALSE)
-    j_idx <- rep(seq_along(nn_data$index), lengths(nn_data$index))
-    dists <- unlist(nn_data$distance, use.names = FALSE)
+    nn_list <- Map(c, seq_along(nn_data$index), nn_data$index)
+    dist_list <- Map(c, 0, nn_data$distance)
+    i_idx <- unlist(nn_list, use.names = FALSE)
+    j_idx <- rep(seq_along(nn_list), lengths(nn_list))
+    dists <- unlist(dist_list, use.names = FALSE)
     
     raw_weights <- exp(-dists / bandwidth_scaled)
     
@@ -179,14 +181,16 @@ smoothclust <- function(input, assay_name = "counts", spatial_coords = NULL,
     x_val <- raw_weights / col_sums[j_idx]
     
   } else if (method == "knn") {
-    # 1. fast k-nearest neighbor search (k+1 to include self)
-    nn_data <- findKNN(spatial_coords, k = k + 1, 
+    # 1. fast k-nearest neighbor search
+    nn_data <- findKNN(spatial_coords, k = k, 
                        get.index = TRUE, get.distance = FALSE)
     
-    # 2. prepare indices and values for W; weight is uniform 1/(k+1)
-    i_idx <- as.vector(t(nn_data$index))
-    j_idx <- rep(seq_len(N), each = k + 1)
-    x_val <- rep(1 / (k + 1), length(i_idx))
+    # 2. prepare indices and values for W; include self with uniform weight
+    nn_mat <- cbind(seq_len(N), nn_data$index)
+    n_neighbors <- ncol(nn_mat)
+    i_idx <- as.vector(t(nn_mat))
+    j_idx <- rep(seq_len(N), each = n_neighbors)
+    x_val <- rep(1 / n_neighbors, length(i_idx))
   }
   
   # --- construct weights matrix W and perform single matrix multiplication ---
