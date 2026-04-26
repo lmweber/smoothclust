@@ -177,7 +177,9 @@ smoothclust <- function(input, assay_name = "counts", spatial_coords = NULL,
     raw_weights <- exp(-dists / bandwidth_scaled)
     
     # 4. normalize weights so each column in W sums to 1
-    col_sums <- as.vector(tapply(raw_weights, j_idx, sum))
+    col_sums <- numeric(N)
+    col_sums_tmp <- tapply(raw_weights, j_idx, sum)
+    col_sums[as.integer(names(col_sums_tmp))] <- col_sums_tmp
     x_val <- raw_weights / col_sums[j_idx]
     
   } else if (method == "knn") {
