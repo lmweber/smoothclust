@@ -3,3 +3,6 @@ changes in version 0.99.0 (2024-03-17)
 
 changes in version 1.5.7 (2025-09-15)
 + optimizations to speed up runtime
+
+changes in version 1.7.1 (2026-04-26)
++ bug fixes; updates to speed up runtime
