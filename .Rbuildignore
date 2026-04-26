@@ -4,3 +4,4 @@
 ^.*\.png$
 ^\.positai$
 ^\.claude$
+^AGENTS\.md$
