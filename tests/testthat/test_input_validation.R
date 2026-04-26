@@ -7,6 +7,8 @@ test_that("smoothclust validates parameter values", {
   expect_error(smoothclust(input, spatial_coords = spatial_coords, k = 1.5))
   expect_error(smoothclust(input, spatial_coords = spatial_coords, truncate = 1))
   expect_error(smoothclust(input, spatial_coords = spatial_coords, truncate = NA_real_))
+  expect_error(smoothclust(input, spatial_coords = spatial_coords, n_threads = 0))
+  expect_error(smoothclust(input, spatial_coords = spatial_coords, n_threads = 1.5))
 })
 
 test_that("smoothclust validates spatial coordinate compatibility", {
@@ -40,4 +42,6 @@ test_that("smoothness_metric validates inputs", {
   expect_error(smoothness_metric(spatial_coords, labels, k = 0))
   expect_error(smoothness_metric(spatial_coords, labels, k = 1.5))
   expect_error(smoothness_metric(spatial_coords, labels, k = 4))
+  expect_error(smoothness_metric(spatial_coords, labels, n_threads = 0))
+  expect_error(smoothness_metric(spatial_coords, labels, n_threads = Inf))
 })

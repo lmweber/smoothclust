@@ -4,7 +4,7 @@
 \alias{smoothness_metric}
 \title{Function for smoothness metric}
 \usage{
-smoothness_metric(spatial_coords, labels, k = 6)
+smoothness_metric(spatial_coords, labels, k = 6, n_threads = 1)
 }
 \arguments{
 \item{spatial_coords}{Numeric matrix containing spatial coordinates of
@@ -18,6 +18,9 @@ dimensions). For example, `spatial_coords = spatialCoords(spe)` if using a
 
 \item{k}{Number of k nearest neighbors to use in calculation. Default = 6
 (e.g. for hexagonal arrangement in 10x Genomics Visium platform).}
+
+\item{n_threads}{Number of threads to use for nearest-neighbor searches.
+Default = 1.}
 }
 \value{
 Returns a list containing (i) a vector of values at each point (i.e.

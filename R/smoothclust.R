@@ -71,6 +71,9 @@
 #'   Kernel weights below this value are set to zero for computational
 #'   efficiency. Only used for \code{method = "kernel"}. Default = 0.05.
 #' 
+#' @param n_threads Number of threads to use for nearest-neighbor searches.
+#'   Default = 1.
+#' 
 #' 
 #' @return Returns spatially smoothed expression values, which can then be used
 #'   as the input for further downstream analyses. Results are returned either
@@ -103,7 +106,8 @@
 #' 
 smoothclust <- function(input, assay_name = "counts", spatial_coords = NULL, 
                         method = c("uniform", "kernel", "knn"), 
-                        bandwidth = 0.05, k = 18, truncate = 0.05) {
+                        bandwidth = 0.05, k = 18, truncate = 0.05, 
+                        n_threads = 1) {
   
   method <- match.arg(method, c("uniform", "kernel", "knn"))
   
@@ -114,6 +118,9 @@ smoothclust <- function(input, assay_name = "counts", spatial_coords = NULL,
               k > 0 && k == floor(k))
   stopifnot(is.numeric(truncate) && length(truncate) == 1 && 
               is.finite(truncate) && truncate > 0 && truncate < 1)
+  stopifnot(is.numeric(n_threads) && length(n_threads) == 1 && 
+              is.finite(n_threads) && n_threads > 0 && 
+              n_threads == floor(n_threads))
   
   if (is(input, "SpatialExperiment")) {
     spe <- input
@@ -152,7 +159,8 @@ smoothclust <- function(input, assay_name = "counts", spatial_coords = NULL,
   if (method == "uniform") {
     # 1. fast neighbor search
     nn_data <- findNeighbors(spatial_coords, threshold = bandwidth_scaled, 
-                             get.index = TRUE, get.distance = FALSE)
+                             get.index = TRUE, get.distance = FALSE, 
+                             num.threads = n_threads)
     nn_list <- Map(c, seq_along(nn_data$index), nn_data$index)
     
     # 2. get number of neighbors for each spot
@@ -173,7 +181,8 @@ smoothclust <- function(input, assay_name = "counts", spatial_coords = NULL,
     
     # 2. fast neighbor search within this radius
     nn_data <- findNeighbors(spatial_coords, threshold = max_dist, 
-                             get.index = TRUE, get.distance = TRUE)
+                             get.index = TRUE, get.distance = TRUE, 
+                             num.threads = n_threads)
     
     # 3. calculate raw exponential kernel weights
     nn_list <- Map(c, seq_along(nn_data$index), nn_data$index)
@@ -193,7 +202,8 @@ smoothclust <- function(input, assay_name = "counts", spatial_coords = NULL,
   } else if (method == "knn") {
     # 1. fast k-nearest neighbor search
     nn_data <- findKNN(spatial_coords, k = k, 
-                       get.index = "transposed", get.distance = FALSE)
+                       get.index = "transposed", get.distance = FALSE, 
+                       num.threads = n_threads)
     
     # 2. prepare indices and values for W; include self with uniform weight
     nn_mat <- rbind(seq_len(N), nn_data$index)

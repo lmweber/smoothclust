@@ -20,6 +20,9 @@
 #' @param k Number of k nearest neighbors to use in calculation. Default = 6
 #'   (e.g. for hexagonal arrangement in 10x Genomics Visium platform).
 #' 
+#' @param n_threads Number of threads to use for nearest-neighbor searches.
+#'   Default = 1.
+#' 
 #' 
 #' @return Returns a list containing (i) a vector of values at each point (i.e.
 #'   the number of nearest neighbors that are from a different cluster at each
@@ -73,7 +76,7 @@
 #' head(res$n_discordant)
 #' res$mean_discordant
 #' 
-smoothness_metric <- function(spatial_coords, labels, k = 6) {
+smoothness_metric <- function(spatial_coords, labels, k = 6, n_threads = 1) {
   
   stopifnot(!is.null(spatial_coords), 
             is.numeric(spatial_coords), 
@@ -83,12 +86,16 @@ smoothness_metric <- function(spatial_coords, labels, k = 6) {
   stopifnot(length(labels) == nrow(spatial_coords))
   stopifnot(is.numeric(k) && length(k) == 1 && is.finite(k) && 
               k > 0 && k == floor(k) && k < nrow(spatial_coords))
+  stopifnot(is.numeric(n_threads) && length(n_threads) == 1 && 
+              is.finite(n_threads) && n_threads > 0 && 
+              n_threads == floor(n_threads))
   
   # --- fast k-nearest neighbor search ---
   
   # search for k nearest neighbors
   nn_data <- findKNN(spatial_coords, k = k, 
-                     get.index = TRUE, get.distance = FALSE)
+                     get.index = TRUE, get.distance = FALSE, 
+                     num.threads = n_threads)
   neigh <- nn_data$index
   
   # --- vectorized label lookup and calculation ---
