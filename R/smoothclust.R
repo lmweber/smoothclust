@@ -193,12 +193,12 @@ smoothclust <- function(input, assay_name = "counts", spatial_coords = NULL,
   } else if (method == "knn") {
     # 1. fast k-nearest neighbor search
     nn_data <- findKNN(spatial_coords, k = k, 
-                       get.index = TRUE, get.distance = FALSE)
+                       get.index = "transposed", get.distance = FALSE)
     
     # 2. prepare indices and values for W; include self with uniform weight
-    nn_mat <- cbind(seq_len(N), nn_data$index)
-    n_neighbors <- ncol(nn_mat)
-    i_idx <- as.vector(t(nn_mat))
+    nn_mat <- rbind(seq_len(N), nn_data$index)
+    n_neighbors <- nrow(nn_mat)
+    i_idx <- as.vector(nn_mat)
     j_idx <- rep(seq_len(N), each = n_neighbors)
     x_val <- rep(1 / n_neighbors, length(i_idx))
   }
