@@ -71,6 +71,9 @@
 #'   Kernel weights below this value are set to zero for computational
 #'   efficiency. Only used for \code{method = "kernel"}. Default = 0.05.
 #' 
+#' @param n_threads Number of threads to use for nearest-neighbor searches.
+#'   Default = 1.
+#' 
 #' 
 #' @return Returns spatially smoothed expression values, which can then be used
 #'   as the input for further downstream analyses. Results are returned either
@@ -103,14 +106,21 @@
 #' 
 smoothclust <- function(input, assay_name = "counts", spatial_coords = NULL, 
                         method = c("uniform", "kernel", "knn"), 
-                        bandwidth = 0.05, k = 18, truncate = 0.05) {
+                        bandwidth = 0.05, k = 18, truncate = 0.05, 
+                        n_threads = 1) {
   
   method <- match.arg(method, c("uniform", "kernel", "knn"))
   
   stopifnot(is.character(assay_name) && length(assay_name) == 1)
-  stopifnot(is.numeric(bandwidth))
-  stopifnot(is.numeric(k))
-  stopifnot(is.numeric(truncate))
+  stopifnot(is.numeric(bandwidth) && length(bandwidth) == 1 && 
+              is.finite(bandwidth) && bandwidth > 0)
+  stopifnot(is.numeric(k) && length(k) == 1 && is.finite(k) && 
+              k > 0 && k == floor(k))
+  stopifnot(is.numeric(truncate) && length(truncate) == 1 && 
+              is.finite(truncate) && truncate > 0 && truncate < 1)
+  stopifnot(is.numeric(n_threads) && length(n_threads) == 1 && 
+              is.finite(n_threads) && n_threads > 0 && 
+              n_threads == floor(n_threads))
   
   if (is(input, "SpatialExperiment")) {
     spe <- input
@@ -125,11 +135,16 @@ smoothclust <- function(input, assay_name = "counts", spatial_coords = NULL,
   stopifnot(!is.null(spatial_coords), 
             is.numeric(spatial_coords), 
             is.matrix(spatial_coords), 
-            ncol(spatial_coords) == 2)
+            ncol(spatial_coords) == 2, 
+            all(is.finite(spatial_coords)))
   
   # convert vals to CsparseMatrix for efficient multiplication
   vals <- as(vals, "CsparseMatrix")
   N <- ncol(vals)
+  stopifnot(nrow(spatial_coords) == N)
+  if (method == "knn") {
+    stopifnot(k < N)
+  }
   
   if (method %in% c("uniform", "kernel")) {
     # convert bandwidth to same units as distances
@@ -144,8 +159,9 @@ smoothclust <- function(input, assay_name = "counts", spatial_coords = NULL,
   if (method == "uniform") {
     # 1. fast neighbor search
     nn_data <- findNeighbors(spatial_coords, threshold = bandwidth_scaled, 
-                             get.index = TRUE, get.distance = FALSE)
-    nn_list <- nn_data$index
+                             get.index = TRUE, get.distance = FALSE, 
+                             num.threads = n_threads)
+    nn_list <- Map(c, seq_along(nn_data$index), nn_data$index)
     
     # 2. get number of neighbors for each spot
     n_neighbors <- lengths(nn_list)
@@ -165,28 +181,36 @@ smoothclust <- function(input, assay_name = "counts", spatial_coords = NULL,
     
     # 2. fast neighbor search within this radius
     nn_data <- findNeighbors(spatial_coords, threshold = max_dist, 
-                             get.index = TRUE, get.distance = TRUE)
+                             get.index = TRUE, get.distance = TRUE, 
+                             num.threads = n_threads)
     
     # 3. calculate raw exponential kernel weights
-    i_idx <- unlist(nn_data$index, use.names = FALSE)
-    j_idx <- rep(seq_along(nn_data$index), lengths(nn_data$index))
-    dists <- unlist(nn_data$distance, use.names = FALSE)
+    nn_list <- Map(c, seq_along(nn_data$index), nn_data$index)
+    dist_list <- Map(c, 0, nn_data$distance)
+    i_idx <- unlist(nn_list, use.names = FALSE)
+    j_idx <- rep(seq_along(nn_list), lengths(nn_list))
+    dists <- unlist(dist_list, use.names = FALSE)
     
     raw_weights <- exp(-dists / bandwidth_scaled)
     
     # 4. normalize weights so each column in W sums to 1
-    col_sums <- as.vector(tapply(raw_weights, j_idx, sum))
+    col_sums <- as.numeric(sparseMatrix(i = j_idx, 
+                                        j = rep.int(1L, length(j_idx)), 
+                                        x = raw_weights, dims = c(N, 1)))
     x_val <- raw_weights / col_sums[j_idx]
     
   } else if (method == "knn") {
-    # 1. fast k-nearest neighbor search (k+1 to include self)
-    nn_data <- findKNN(spatial_coords, k = k + 1, 
-                       get.index = TRUE, get.distance = FALSE)
+    # 1. fast k-nearest neighbor search
+    nn_data <- findKNN(spatial_coords, k = k, 
+                       get.index = "transposed", get.distance = FALSE, 
+                       num.threads = n_threads)
     
-    # 2. prepare indices and values for W; weight is uniform 1/(k+1)
-    i_idx <- as.vector(t(nn_data$index))
-    j_idx <- rep(seq_len(N), each = k + 1)
-    x_val <- rep(1 / (k + 1), length(i_idx))
+    # 2. prepare indices and values for W; include self with uniform weight
+    nn_mat <- rbind(seq_len(N), nn_data$index)
+    n_neighbors <- nrow(nn_mat)
+    i_idx <- as.vector(nn_mat)
+    j_idx <- rep(seq_len(N), each = n_neighbors)
+    x_val <- rep(1 / n_neighbors, length(i_idx))
   }
   
   # --- construct weights matrix W and perform single matrix multiplication ---

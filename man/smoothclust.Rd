@@ -11,7 +11,8 @@ smoothclust(
   method = c("uniform", "kernel", "knn"),
   bandwidth = 0.05,
   k = 18,
-  truncate = 0.05
+  truncate = 0.05,
+  n_threads = 1
 )
 }
 \arguments{
@@ -71,6 +72,9 @@ two layers in honeycomb pattern for 10x Genomics Visium platform).}
 \item{truncate}{Truncation threshold parameter if \code{method = "kernel"}.
 Kernel weights below this value are set to zero for computational
 efficiency. Only used for \code{method = "kernel"}. Default = 0.05.}
+
+\item{n_threads}{Number of threads to use for nearest-neighbor searches.
+Default = 1.}
 }
 \value{
 Returns spatially smoothed expression values, which can then be used
