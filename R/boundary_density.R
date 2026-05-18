@@ -2,10 +2,10 @@
 #' 
 #' Function for boundary density metric
 #' 
-#' Function to calculate the boundary density metric, defined as the
-#' average number of nearest neighbors per point that are from a different
-#' cluster. This metric can be used to quantify and compare the relative
-#' density of the boundaries of clusters or spatial domains.
+#' Function to calculate the boundary density metric, defined as the average
+#' fraction of nearest neighbors per point that are from a different cluster.
+#' This metric can be used to quantify and compare the relative density of the
+#' boundaries of clusters or spatial domains.
 #' 
 #' 
 #' @param spatial_coords Numeric matrix containing spatial coordinates of
@@ -24,9 +24,10 @@
 #'   Default = 1.
 #' 
 #' 
-#' @return Returns a list containing (i) a vector of values at each point (i.e.
-#'   the number of nearest neighbors that are from a different cluster at each
-#'   point) and (ii) the average value across all points.
+#' @return Returns a list containing values at each point (i.e. the number of
+#'   nearest neighbors that are from a different cluster, the number of nearest
+#'   neighbors, and the local boundary density) as well as the mean discordant
+#'   neighbor count and the sample-level boundary density.
 #' 
 #' 
 #' @importFrom BiocNeighbors findKNN
@@ -75,6 +76,7 @@
 #' str(res)
 #' head(res$n_discordant)
 #' res$mean_discordant
+#' res$boundary_density
 #' 
 boundary_density <- function(spatial_coords, labels, k = 6, n_threads = 1) {
   
@@ -104,10 +106,16 @@ boundary_density <- function(spatial_coords, labels, k = 6, n_threads = 1) {
   neigh_labels <- matrix(labels[neigh], ncol = ncol(neigh))
   
   # compare 'labels' vector against each column of 'neigh_labels'
-  vals <- rowSums(labels != neigh_labels)
+  n_discordant <- rowSums(labels != neigh_labels)
+  n_neighbors <- rep.int(ncol(neigh), nrow(neigh))
+  local_boundary_density <- n_discordant / n_neighbors
   
   # --- return results ---
   
-  # return vector and average value
-  list(n_discordant = vals, mean_discordant = mean(vals))
+  # return local and sample-level values
+  list(n_discordant = n_discordant, 
+       n_neighbors = n_neighbors, 
+       local_boundary_density = local_boundary_density, 
+       mean_discordant = mean(n_discordant), 
+       boundary_density = mean(local_boundary_density))
 }

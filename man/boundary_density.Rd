@@ -23,18 +23,19 @@ dimensions). For example, `spatial_coords = spatialCoords(spe)` if using a
 Default = 1.}
 }
 \value{
-Returns a list containing (i) a vector of values at each point (i.e.
-  the number of nearest neighbors that are from a different cluster at each
-  point) and (ii) the average value across all points.
+Returns a list containing values at each point (i.e. the number of
+  nearest neighbors that are from a different cluster, the number of nearest
+  neighbors, and the local boundary density) as well as the mean discordant
+  neighbor count and the sample-level boundary density.
 }
 \description{
 Function for boundary density metric
 }
 \details{
-Function to calculate the boundary density metric, defined as the
-average number of nearest neighbors per point that are from a different
-cluster. This metric can be used to quantify and compare the relative
-density of the boundaries of clusters or spatial domains.
+Function to calculate the boundary density metric, defined as the average
+fraction of nearest neighbors per point that are from a different cluster.
+This metric can be used to quantify and compare the relative density of the
+boundaries of clusters or spatial domains.
 }
 \examples{
 library(STexampleData)
@@ -78,5 +79,6 @@ res <- boundary_density(spatialCoords(spe), as.numeric(colData(spe)$label))
 str(res)
 head(res$n_discordant)
 res$mean_discordant
+res$boundary_density
 
 }

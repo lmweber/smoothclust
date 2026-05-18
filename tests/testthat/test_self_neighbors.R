@@ -36,5 +36,21 @@ test_that("boundary_density does not skip the nearest non-self neighbor", {
   res <- boundary_density(spatial_coords, labels, k = 1)
   
   expect_equal(res$n_discordant, c(1, 1, 1, 0))
+  expect_equal(res$n_neighbors, c(1, 1, 1, 1))
+  expect_equal(res$local_boundary_density, c(1, 1, 1, 0))
   expect_equal(res$mean_discordant, 0.75)
+  expect_equal(res$boundary_density, 0.75)
+})
+
+test_that("boundary_density normalizes by the number of neighbors", {
+  spatial_coords <- cbind(c(0, 1, 3, 6), 0)
+  labels <- c(1, 2, 1, 1)
+  
+  res <- boundary_density(spatial_coords, labels, k = 2)
+  
+  expect_equal(res$n_discordant, c(1, 2, 1, 1))
+  expect_equal(res$n_neighbors, c(2, 2, 2, 2))
+  expect_equal(res$local_boundary_density, c(0.5, 1, 0.5, 0.5))
+  expect_equal(res$mean_discordant, 1.25)
+  expect_equal(res$boundary_density, 0.625)
 })
