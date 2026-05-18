@@ -52,4 +52,7 @@ test_that("boundary_density validates inputs", {
   expect_error(boundary_density(spatial_coords, labels, 
                                 adjust = "permutation", seed = NA_real_))
   expect_error(boundary_density(spatial_coords, c(1, 1, 2, NA), k = 1))
+  expect_error(boundary_density(spatial_coords, list(1, 1, 2, 2), k = 1))
+  expect_error(boundary_density(spatial_coords, 
+                                matrix(c(1, 1, 2, 2), ncol = 1), k = 1))
 })

@@ -21,6 +21,23 @@ test_that("boundary_density returns analytic composition adjustment", {
   expect_equal(res$excess_boundary_density, 0.125)
 })
 
+test_that("boundary_density supports character and factor labels", {
+  spatial_coords <- cbind(c(0, 1, 3, 6), 0)
+  labels_chr <- c("A", "B", "A", "A")
+  labels_fac <- factor(labels_chr)
+  
+  res_chr <- boundary_density(spatial_coords, labels_chr, k = 2, 
+                              adjust = "analytic")
+  res_fac <- boundary_density(spatial_coords, labels_fac, k = 2, 
+                              adjust = "analytic")
+  
+  expect_equal(res_chr$n_discordant, c(1, 2, 1, 1))
+  expect_equal(res_fac$n_discordant, res_chr$n_discordant)
+  expect_equal(res_fac$boundary_density, res_chr$boundary_density)
+  expect_equal(res_fac$expected_boundary_density, 
+               res_chr$expected_boundary_density)
+})
+
 test_that("boundary_density returns permutation composition adjustment", {
   spatial_coords <- cbind(c(0, 1, 3, 6), 0)
   labels <- c(1, 2, 1, 1)

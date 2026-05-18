@@ -20,9 +20,9 @@ points, formatted as nrow = number of points, ncol = 2 (assuming x and y
 dimensions). For example, `spatial_coords = spatialCoords(spe)` if using a
 \code{SpatialExperiment} object.}
 
-\item{labels}{Numeric vector of cluster labels for each point. Missing values
-are not allowed. For example, `labels <-
-as.numeric(colData(spe)$label)` if using a \code{SpatialExperiment} object.}
+\item{labels}{Atomic vector or factor containing cluster labels for each
+point. Missing values are not allowed. For example, `labels <-
+colData(spe)$label` if using a \code{SpatialExperiment} object.}
 
 \item{k}{Number of k nearest neighbors to use in calculation. Default = 6
 (e.g. for hexagonal arrangement in 10x Genomics Visium platform).}

@@ -15,9 +15,9 @@
 #'   dimensions). For example, `spatial_coords = spatialCoords(spe)` if using a
 #'   \code{SpatialExperiment} object.
 #' 
-#' @param labels Numeric vector of cluster labels for each point. Missing values
-#'   are not allowed. For example, `labels <-
-#'   as.numeric(colData(spe)$label)` if using a \code{SpatialExperiment} object.
+#' @param labels Atomic vector or factor containing cluster labels for each
+#'   point. Missing values are not allowed. For example, `labels <-
+#'   colData(spe)$label` if using a \code{SpatialExperiment} object.
 #' 
 #' @param k Number of k nearest neighbors to use in calculation. Default = 6
 #'   (e.g. for hexagonal arrangement in 10x Genomics Visium platform).
@@ -82,6 +82,8 @@ boundary_density <- function(spatial_coords, labels, k = 6, n_threads = 1,
             is.matrix(spatial_coords), 
             ncol(spatial_coords) == 2, 
             all(is.finite(spatial_coords)))
+  stopifnot((is.atomic(labels) || is.factor(labels)) && 
+              is.null(dim(labels)))
   stopifnot(length(labels) == nrow(spatial_coords))
   stopifnot(!anyNA(labels))
   stopifnot(is.numeric(k) && length(k) == 1 && is.finite(k) && 
