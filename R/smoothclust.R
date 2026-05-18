@@ -92,17 +92,13 @@
 #' @export
 #' 
 #' @examples
-#' library(STexampleData)
+#' set.seed(123)
+#' input <- matrix(rpois(60, lambda = 10), nrow = 10)
+#' spatial_coords <- cbind(rep(1:3, each = 2), rep(1:2, times = 3))
 #' 
-#' # load data
-#' spe <- Visium_humanDLPFC()
-#' # keep spots over tissue
-#' spe <- spe[, colData(spe)$in_tissue == 1]
-#' 
-#' # run smoothclust using default parameters
-#' spe <- smoothclust(spe)
-#' 
-#' # see vignette for extended example
+#' # smooth a numeric expression matrix
+#' out <- smoothclust(input, spatial_coords = spatial_coords, bandwidth = 0.6)
+#' dim(out)
 #' 
 smoothclust <- function(input, assay_name = "counts", spatial_coords = NULL, 
                         method = c("uniform", "kernel", "knn"), 

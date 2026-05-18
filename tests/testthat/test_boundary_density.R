@@ -1,8 +1,9 @@
-# run example from boundary_density() function documentation
-example(boundary_density, echo = FALSE)
-
-
 test_that("results object has correct structure", {
+  spatial_coords <- cbind(c(0, 1, 3, 6), 0)
+  labels <- c("A", "B", "A", "A")
+  
+  res <- boundary_density(spatial_coords, labels, k = 2)
+  
   expect_is(res, "list")
   expect_named(res, c("n_discordant", "n_neighbors", "local_boundary_density", 
                       "mean_discordant", "boundary_density"))

@@ -66,47 +66,20 @@ adjustments can be used to compare the raw boundary density to an expected
 value under random relabeling.
 }
 \examples{
-library(STexampleData)
-library(scran)
-library(scater)
+spatial_coords <- cbind(c(0, 1, 3, 6), 0)
+labels <- c("A", "B", "A", "A")
 
-# load data
-spe <- Visium_humanDLPFC()
-# keep spots over tissue
-spe <- spe[, colData(spe)$in_tissue == 1]
-
-# run smoothclust using default parameters
-spe <- smoothclust(spe)
-
-# calculate logcounts
-spe <- logNormCounts(spe, assay.type = "counts_smooth")
-
-# preprocessing steps for clustering
-# remove mitochondrial genes
-is_mito <- grepl("(^mt-)", rowData(spe)$gene_name, ignore.case = TRUE)
-spe <- spe[!is_mito, ]
-# select top highly variable genes (HVGs)
-dec <- modelGeneVar(spe)
-top_hvgs <- getTopHVGs(dec, prop = 0.1)
-spe <- spe[top_hvgs, ]
-
-# dimensionality reduction
-set.seed(123)
-spe <- runPCA(spe)
-
-# run k-means clustering
-set.seed(123)
-k <- 5
-clus <- kmeans(reducedDim(spe, "PCA"), centers = k)$cluster
-colLabels(spe) <- factor(clus)
-
-# calculate boundary density metric
-res <- boundary_density(spatialCoords(spe), as.numeric(colData(spe)$label))
-
-# results
+# calculate raw boundary density metric
+res <- boundary_density(spatial_coords, labels, k = 2)
 str(res)
-head(res$n_discordant)
+res$n_discordant
 res$mean_discordant
 res$boundary_density
+
+# calculate analytic composition adjustment
+res_adj <- boundary_density(spatial_coords, labels, k = 2, 
+                            adjust = "analytic")
+res_adj$expected_boundary_density
+res_adj$relative_boundary_density
 
 }
