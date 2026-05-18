@@ -4,7 +4,15 @@
 \alias{boundary_density}
 \title{Boundary density metric}
 \usage{
-boundary_density(spatial_coords, labels, k = 6, n_threads = 1)
+boundary_density(
+  spatial_coords,
+  labels,
+  k = 6,
+  n_threads = 1,
+  adjust = c("none", "analytic", "permutation"),
+  n_permutations = 1000,
+  seed = NULL
+)
 }
 \arguments{
 \item{spatial_coords}{Numeric matrix containing spatial coordinates of
@@ -12,30 +20,50 @@ points, formatted as nrow = number of points, ncol = 2 (assuming x and y
 dimensions). For example, `spatial_coords = spatialCoords(spe)` if using a
 \code{SpatialExperiment} object.}
 
-\item{labels}{Numeric vector of cluster labels for each point. For example,
-`labels <- as.numeric(colData(spe)$label)` if using a
-\code{SpatialExperiment} object.}
+\item{labels}{Numeric vector of cluster labels for each point. Missing values
+are not allowed. For example, `labels <-
+as.numeric(colData(spe)$label)` if using a \code{SpatialExperiment} object.}
 
 \item{k}{Number of k nearest neighbors to use in calculation. Default = 6
 (e.g. for hexagonal arrangement in 10x Genomics Visium platform).}
 
 \item{n_threads}{Number of threads to use for nearest-neighbor searches.
 Default = 1.}
+
+\item{adjust}{Composition adjustment to calculate. Options are \code{none},
+\code{analytic}, and \code{permutation}. With \code{none}, only the raw
+boundary density is returned. With \code{analytic}, the raw boundary
+density is compared to a deterministic expectation based on the observed
+label counts. With \code{permutation}, labels are randomly permuted across
+spatial locations \code{n_permutations} times. Default = \code{none}.}
+
+\item{n_permutations}{Number of random label permutations to use when
+\code{adjust = "permutation"}. Default = 1000.}
+
+\item{seed}{Optional random seed to use when \code{adjust = "permutation"}.
+Default = \code{NULL}.}
 }
 \value{
 Returns a list containing values at each point (i.e. the number of
   nearest neighbors that are from a different cluster, the number of nearest
-  neighbors, and the local boundary density) as well as the mean discordant
-  neighbor count and the sample-level boundary density.
+  neighbors, and the local raw boundary density) as well as the mean
+  discordant neighbor count and the sample-level raw boundary density. If
+  \code{adjust = "analytic"}, the list also contains the expected boundary
+  density, relative boundary density, and excess boundary density. If
+  \code{adjust = "permutation"}, the list also contains the permutation
+  mean, standard deviation, relative boundary density, standardized score,
+  and number of permutations.
 }
 \description{
 Function for boundary density metric
 }
 \details{
-Function to calculate the boundary density metric, defined as the average
-fraction of nearest neighbors per point that are from a different cluster.
-This metric can be used to quantify and compare the relative density of the
-boundaries of clusters or spatial domains.
+Function to calculate the raw boundary density metric, defined as the
+average fraction of nearest neighbors per point that are from a different
+cluster. This metric can be used to quantify and compare the relative density
+of the boundaries of clusters or spatial domains. Optional composition
+adjustments can be used to compare the raw boundary density to an expected
+value under random relabeling.
 }
 \examples{
 library(STexampleData)

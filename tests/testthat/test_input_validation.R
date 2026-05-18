@@ -44,4 +44,12 @@ test_that("boundary_density validates inputs", {
   expect_error(boundary_density(spatial_coords, labels, k = 4))
   expect_error(boundary_density(spatial_coords, labels, n_threads = 0))
   expect_error(boundary_density(spatial_coords, labels, n_threads = Inf))
+  expect_error(boundary_density(spatial_coords, labels, adjust = "bad"))
+  expect_error(boundary_density(spatial_coords, labels, 
+                                adjust = "permutation", n_permutations = 1))
+  expect_error(boundary_density(spatial_coords, labels, 
+                                adjust = "permutation", n_permutations = 1.5))
+  expect_error(boundary_density(spatial_coords, labels, 
+                                adjust = "permutation", seed = NA_real_))
+  expect_error(boundary_density(spatial_coords, c(1, 1, 2, NA), k = 1))
 })
