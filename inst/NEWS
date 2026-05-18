@@ -6,3 +6,9 @@ changes in version 1.5.7 (2025-09-15)
 
 changes in version 1.7.1 (2026-04-26)
 + bug fixes; updates to speed up runtime
+
+changes in version 1.9.2 (2026-05-18)
++ rename metric to boundary density
++ include normalization for number of nearest neighbors
++ include optional composition adjustments
++ return local and sample-level boundary density metric
