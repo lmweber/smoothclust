@@ -25,12 +25,13 @@
 #' @param n_threads Number of threads to use for nearest-neighbor searches.
 #'   Default = 1.
 #' 
-#' @param adjust Composition adjustment to calculate. Options are \code{none},
-#'   \code{analytic}, and \code{permutation}. With \code{none}, only the raw
-#'   boundary density is returned. With \code{analytic}, the raw boundary
-#'   density is compared to a deterministic expectation based on the observed
-#'   label counts. With \code{permutation}, labels are randomly permuted across
-#'   spatial locations \code{n_permutations} times. Default = \code{none}.
+#' @param adjust Composition adjustment to calculate. Options are
+#'   \code{"none"}, \code{"analytic"}, and \code{"permutation"}. With
+#'   \code{"none"}, only the raw boundary density is returned. With
+#'   \code{"analytic"}, the raw boundary density is compared to a deterministic
+#'   expectation based on the observed label counts. With
+#'   \code{"permutation"}, labels are randomly permuted across spatial
+#'   locations \code{n_permutations} times. Default = \code{"none"}.
 #' 
 #' @param n_permutations Number of random label permutations to use when
 #'   \code{adjust = "permutation"}. Default = 1000.
