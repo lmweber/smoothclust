@@ -1,5 +1,5 @@
-# run example from smoothness_metric() function documentation
-example(smoothness_metric, echo = FALSE)
+# run example from boundary_density() function documentation
+example(boundary_density, echo = FALSE)
 
 
 test_that("results object has correct structure", {

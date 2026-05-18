@@ -29,11 +29,11 @@ test_that("smoothclust includes self in knn neighborhoods", {
   expect_equal(as.numeric(out), c(1.5, 1.5, 2.5, 3.5))
 })
 
-test_that("smoothness_metric does not skip the nearest non-self neighbor", {
+test_that("boundary_density does not skip the nearest non-self neighbor", {
   spatial_coords <- cbind(c(0, 1, 3, 6), 0)
   labels <- c(1, 2, 1, 1)
   
-  res <- smoothness_metric(spatial_coords, labels, k = 1)
+  res <- boundary_density(spatial_coords, labels, k = 1)
   
   expect_equal(res$n_discordant, c(1, 1, 1, 0))
   expect_equal(res$mean_discordant, 0.75)

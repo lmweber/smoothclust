@@ -29,19 +29,19 @@ test_that("smoothclust validates k when using knn smoothing", {
   expect_error(smoothclust(input, spatial_coords = spatial_coords, method = "knn", k = 4))
 })
 
-test_that("smoothness_metric validates inputs", {
+test_that("boundary_density validates inputs", {
   spatial_coords <- cbind(0:3, 0)
   labels <- c(1, 1, 2, 2)
   
-  expect_error(smoothness_metric(spatial_coords[-1, ], labels, k = 1))
+  expect_error(boundary_density(spatial_coords[-1, ], labels, k = 1))
   
   spatial_coords_bad <- spatial_coords
   spatial_coords_bad[1, 1] <- NA_real_
-  expect_error(smoothness_metric(spatial_coords_bad, labels, k = 1))
+  expect_error(boundary_density(spatial_coords_bad, labels, k = 1))
   
-  expect_error(smoothness_metric(spatial_coords, labels, k = 0))
-  expect_error(smoothness_metric(spatial_coords, labels, k = 1.5))
-  expect_error(smoothness_metric(spatial_coords, labels, k = 4))
-  expect_error(smoothness_metric(spatial_coords, labels, n_threads = 0))
-  expect_error(smoothness_metric(spatial_coords, labels, n_threads = Inf))
+  expect_error(boundary_density(spatial_coords, labels, k = 0))
+  expect_error(boundary_density(spatial_coords, labels, k = 1.5))
+  expect_error(boundary_density(spatial_coords, labels, k = 4))
+  expect_error(boundary_density(spatial_coords, labels, n_threads = 0))
+  expect_error(boundary_density(spatial_coords, labels, n_threads = Inf))
 })

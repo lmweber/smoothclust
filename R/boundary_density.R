@@ -1,11 +1,11 @@
-#' Function for smoothness metric
+#' Boundary density metric
 #' 
-#' Function for clustering smoothness evaluation metric
+#' Function for boundary density metric
 #' 
-#' Function to calculate clustering smoothness evaluation metric, defined as the
+#' Function to calculate the boundary density metric, defined as the
 #' average number of nearest neighbors per point that are from a different
 #' cluster. This metric can be used to quantify and compare the relative
-#' smoothness of the boundaries of clusters or spatial domains.
+#' density of the boundaries of clusters or spatial domains.
 #' 
 #' 
 #' @param spatial_coords Numeric matrix containing spatial coordinates of
@@ -68,15 +68,15 @@
 #' clus <- kmeans(reducedDim(spe, "PCA"), centers = k)$cluster
 #' colLabels(spe) <- factor(clus)
 #' 
-#' # calculate smoothness metric
-#' res <- smoothness_metric(spatialCoords(spe), as.numeric(colData(spe)$label))
+#' # calculate boundary density metric
+#' res <- boundary_density(spatialCoords(spe), as.numeric(colData(spe)$label))
 #' 
 #' # results
 #' str(res)
 #' head(res$n_discordant)
 #' res$mean_discordant
 #' 
-smoothness_metric <- function(spatial_coords, labels, k = 6, n_threads = 1) {
+boundary_density <- function(spatial_coords, labels, k = 6, n_threads = 1) {
   
   stopifnot(!is.null(spatial_coords), 
             is.numeric(spatial_coords), 
