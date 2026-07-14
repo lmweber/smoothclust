@@ -1,5 +1,5 @@
 Package: smoothclust
-Version: 1.9.2
+Version: 1.9.3
 Title: smoothclust
 Description: Method for identification of spatial domains and spatially-aware 
     clustering in spatial transcriptomics data. The method generates spatial 
@@ -10,7 +10,7 @@ Description: Method for identification of spatial domains and spatially-aware
     analyses.
 Authors@R: c(
     person("Lukas M.", "Weber", 
-           email = "lmweb012@gmail.com", 
+           email = "weberlm3@gmail.com", 
            role = c("aut", "cre"), 
            comment = c(ORCID = "0000-0002-3282-1730")))
 URL: https://github.com/lmweber/smoothclust
